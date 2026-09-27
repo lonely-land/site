@@ -3,7 +3,7 @@
  * 上传单个文件到 R2，并用 HEAD 校验远端大小，最后打印公开 URL。
  *
  * 用法：
- *   set -a; . .env.r2.local; set +a   # 或在环境变量里配置，见 docs/r2-images.md
+ *   set -a; . .env.r2.local; set +a   # 或在环境变量里配置 R2_ENDPOINT/R2_BUCKET/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_PUBLIC_BASE
  *   node scripts/r2-upload-file.mjs <本地文件> [--key images/original/x.jpg] [--content-type image/jpeg]
  *
  * 说明：

@@ -25,7 +25,7 @@
  *   --settings <path>  设置文件（默认 <repo>/settings.json）
  *
  * 用法：
- *   set -a; . .env.r2.local; set +a   # 或在环境变量里配置，见 docs/r2-images.md
+ *   set -a; . .env.r2.local; set +a   # 或在环境变量里配置 R2_ENDPOINT/R2_BUCKET/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_PUBLIC_BASE
  *   node scripts/migrate-images-to-r2.mjs                # dry-run
  *   node scripts/migrate-images-to-r2.mjs --apply
  */
