@@ -1,2 +1,8 @@
+# 单包仓库，但 pnpm 要求工作区文件里必须有 packages 字段
+# （pnpm 9 在缺少该字段时直接报 "packages field missing or empty"，
+#   会导致 CI 里 `pnpm store path` / `pnpm install` 全线失败）
+packages:
+  - "."
+
 allowBuilds:
   unrs-resolver: true
