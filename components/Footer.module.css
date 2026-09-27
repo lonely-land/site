@@ -5,7 +5,7 @@
   background: #101010;
   padding: 8vh 0 0;
   width: 100vw;
-  height: 100vh;
+  height: var(--block-height);
   overflow: hidden;
   position: relative;
 }
@@ -39,7 +39,9 @@
   color: inherit;
 }
 
-.mail {
+/* 联系方式图标：react-icons 组件默认 size="1em"，这里用固定尺寸覆盖，
+   与文字一起在大屏/移动端响应式缩放 */
+.contactIcon {
   flex-shrink: 0;
   width: clamp(28px, 3vw, 48px);
   height: clamp(28px, 3vw, 48px);
@@ -97,7 +99,7 @@
 @media (max-width: 767px) {
   .footer {
     width: 100vw;
-    height: 100vh;
+    height: var(--block-height);
     padding: 80px 24px 120px;
     justify-content: flex-start;
   }
@@ -123,7 +125,7 @@
     column-gap: 12px;
   }
 
-  .mail {
+  .contactIcon {
     width: 28px;
     height: 28px;
   }
@@ -133,11 +135,12 @@
     line-height: 1.4;
   }
 
+  /* 移动端不再向下溢出 5%，保证大字完整落在可见视口内 */
   .lonely {
     position: absolute;
     bottom: 0;
     left: 50%;
-    transform: translateX(-50%) translateY(5%);
+    transform: translateX(-50%);
     font-size: clamp(100px, 28vw, 180px);
     line-height: 0.85;
     color: #101010;

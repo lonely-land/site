@@ -2,6 +2,7 @@
 
 import styles from './Footer.module.css';
 import settings from '@/settings.json';
+import ContactIcon from './ContactIcon';
 
 type LinkItem = {
   icon: string;
@@ -29,7 +30,7 @@ export default function Footer() {
               rel={item.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
               className={styles.frame2}
             >
-              <img src={`/icons/${item.icon}.svg`} className={styles.mail} alt={item.icon} loading="lazy" decoding="async" />
+              <ContactIcon name={item.icon} className={styles.contactIcon} />
               <span className={styles.contactText}>{item.name}</span>
             </a>
           ))}

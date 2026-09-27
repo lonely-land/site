@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react
 import gsap from 'gsap';
 import styles from './Friends.module.css';
 import settings from '@/settings.json';
+import { identityRange, shuffleOrIdentity } from '@/lib/shuffle';
 import ApplyDialog from './ApplyDialog';
 
 type FriendItem = {
@@ -27,7 +28,7 @@ export default function Friends() {
   const friends = (settings.friends || []) as FriendItem[];
   const total = friends.length + 1;
 
-  const [order, setOrder] = useState<number[]>(friends.map((_, i) => i));
+  const [order, setOrder] = useState<number[]>(() => identityRange(friends.length));
   const [mobile, setMobile] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const cardRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -43,12 +44,17 @@ export default function Friends() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // 初始定位
+  // 初始定位 + 随机初始顺序
+  // 洗牌放在 useLayoutEffect：首帧绘制前完成，既不会看到顺序跳变，
+  // 也不会造成 SSR / 客户端首帧不一致
   useLayoutEffect(() => {
     const peek = getPeek();
     const m = window.innerWidth < 768;
 
-    order.forEach((friendIndex, position) => {
+    const initialOrder = shuffleOrIdentity(friends.length, order);
+    setOrder(initialOrder);
+
+    initialOrder.forEach((friendIndex, position) => {
       const card = cardRefs.current[friendIndex];
       if (!card) return;
       gsap.set(card, {

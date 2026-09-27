@@ -1,7 +1,8 @@
 .container {
   position: relative;
   width: 100%;
-  height: 100vh;
+  /* 跟随可见视口高度，移动端地址栏展开时 Block 底部不会被顶到屏幕外 */
+  height: var(--block-height);
   overflow: hidden;
   touch-action: pan-x;
   background: #101010;

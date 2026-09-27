@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { FaArrowRight, FaChevronLeft, FaChevronRight, FaXmark } from 'react-icons/fa6';
 import styles from './Gallery.module.css';
 import settings from '@/settings.json';
 import { type GalleryItem, imgSrc, thumbSrc, fullSrc } from '@/lib/gallery';
+import { identityRange, shuffleRange } from '@/lib/shuffle';
 
 /**
  * 单个 Gallery 卡片
@@ -70,7 +72,20 @@ function GalleryCard({
  */
 export default function Gallery({ limit }: { limit?: number }) {
   const allItems = settings.gallery as GalleryItem[];
-  const items = limit ? allItems.slice(0, limit) : allItems;
+
+  // 卡片随机排序：SSR 首帧用原始顺序，挂载后再洗牌（否则 hydration 不一致）
+  const [order, setOrder] = useState<number[]>(() => identityRange(allItems.length));
+  useEffect(() => {
+    setOrder(shuffleRange(allItems.length));
+  }, [allItems.length]);
+
+  // 先洗牌再截取首页要展示的几张，保证每次刷新看到的不是固定那几张
+  // key 用原始下标：洗牌只改变位置，不重建卡片 DOM
+  const items = useMemo(
+    () => (limit ? order.slice(0, limit) : order).map((i) => ({ key: i, item: allItems[i] })),
+    [order, limit, allItems]
+  );
+
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [fullLoaded, setFullLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -78,7 +93,7 @@ export default function Gallery({ limit }: { limit?: number }) {
   const galleryLinkRef = useRef<HTMLAnchorElement>(null);
 
   const isOpen = lightboxIndex !== null;
-  const currentItem = isOpen ? items[lightboxIndex!] : null;
+  const currentItem = isOpen ? items[lightboxIndex!]?.item ?? null : null;
 
   // 悬停跟踪：用 mouseover/mouseout 事件委托（低频，只在进入/离开元素时触发）
   // 经过卡片间 gap 时保持上一张卡片状态，避免 hover 频繁切换造成卡顿
@@ -223,9 +238,9 @@ export default function Gallery({ limit }: { limit?: number }) {
       <p className={styles.gallery}>Gallery</p>
       <div ref={scrollRef} className={styles.autoWrapper} data-slot-gallery
         onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
-        {items.map((item, index) => (
+        {items.map(({ key, item }, index) => (
           <GalleryCard
-            key={index}
+            key={key}
             item={item}
             index={index}
             onClick={() => setLightboxIndex(index)}
@@ -240,7 +255,7 @@ export default function Gallery({ limit }: { limit?: number }) {
               Go to gallery
               <span className={styles.linkUnderline} />
             </span>
-            <img src="/icons/arrow-right.svg" className={styles.arrowRight} alt="" />
+            <FaArrowRight className={styles.arrowRight} aria-hidden focusable="false" />
           </Link>
         </div>
       )}
@@ -254,7 +269,7 @@ export default function Gallery({ limit }: { limit?: number }) {
             onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
             aria-label="关闭"
           >
-            ×
+            <FaXmark aria-hidden focusable="false" />
           </button>
 
           {items.length > 1 && (
@@ -264,14 +279,14 @@ export default function Gallery({ limit }: { limit?: number }) {
                 onClick={(e) => { e.stopPropagation(); goToPrev(); }}
                 aria-label="上一张"
               >
-                ‹
+                <FaChevronLeft aria-hidden focusable="false" />
               </button>
               <button
                 className={`${styles.lightboxNav} ${styles.lightboxNext}`}
                 onClick={(e) => { e.stopPropagation(); goToNext(); }}
                 aria-label="下一张"
               >
-                ›
+                <FaChevronRight aria-hidden focusable="false" />
               </button>
             </>
           )}

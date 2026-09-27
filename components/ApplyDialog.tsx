@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { FaGithub, FaEnvelope, FaXmark } from 'react-icons/fa6';
 import styles from './ApplyDialog.module.css';
 
 const REPO_URL = 'https://github.com/v0id-ink/site';
@@ -40,13 +41,7 @@ export default function ApplyDialog({ open, onClose }: ApplyDialogProps) {
             onClick={onClose}
             aria-label="Close"
           >
-            <svg width="22.5" height="22.5" viewBox="0 0 25 25" fill="none">
-              <path
-                d="M1.06055 1.06067L12.3105 12.3107M23.5605 1.06067L12.3105 12.3107M12.3105 12.3107L1.06055 23.5607M12.3105 12.3107L23.5605 23.5607"
-                stroke="currentColor"
-                strokeWidth="3"
-              />
-            </svg>
+            <FaXmark aria-hidden focusable="false" />
           </button>
 
           <h2 id="apply-dialog-title" className={styles.title}>
@@ -61,6 +56,7 @@ export default function ApplyDialog({ open, onClose }: ApplyDialogProps) {
               rel="noopener noreferrer"
               className={`${styles.btn} ${styles.btnGithub}`}
             >
+              <FaGithub className={styles.btnIcon} aria-hidden focusable="false" />
               <span className={styles.btnMain}>Github</span>
               <span className={styles.btnSub}>(recommend)</span>
             </a>
@@ -68,6 +64,7 @@ export default function ApplyDialog({ open, onClose }: ApplyDialogProps) {
               href={`mailto:${MAIL_ADDRESS}`}
               className={`${styles.btn} ${styles.btnMail}`}
             >
+              <FaEnvelope className={styles.btnIcon} aria-hidden focusable="false" />
               <span className={styles.btnMain}>Mail</span>
             </a>
           </div>

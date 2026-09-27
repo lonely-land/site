@@ -50,8 +50,9 @@ export default function RootLayout({
         />
         {/* PWA */}
         <meta name="theme-color" content="#101010" />
-        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/icon.svg" />
+        {/* 站点图标：Lonely 角色插画（深色底 #101010，与 theme-color 一致） */}
+        <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className="bg-ink text-white font-inter antialiased">
         {children}
