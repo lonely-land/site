@@ -1,22 +1,35 @@
 {
     "version": "1",
+    "landing": {
+        "background": "https://land.c0ffee.space/images/full/landing-bg.webp"
+    },
     "gallery": [
         {
             "name": "Morning in Haikou",
-            "file": "gallery-main.png"
+            "file": "https://land.c0ffee.space/images/full/gallery-main.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-main.webp",
+            "full": "https://land.c0ffee.space/images/full/gallery-main.webp"
         },
         {
             "name": "Haikou Port",
-            "file": "gallery-secondary.png"
+            "file": "https://land.c0ffee.space/images/full/gallery-secondary.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-secondary.webp",
+            "full": "https://land.c0ffee.space/images/full/gallery-secondary.webp"
         },
         {
-            "file": "DJI_20260228131558_0010_D.JPG"
+            "file": "https://land.c0ffee.space/images/full/DJI_20260228131558_0010_D.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/DJI_20260228131558_0010_D.webp",
+            "full": "https://land.c0ffee.space/images/full/DJI_20260228131558_0010_D.webp"
         },
         {
-            "file": "gallery-1-1.jpg"
+            "file": "https://land.c0ffee.space/images/full/gallery-1-1.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-1-1.webp",
+            "full": "https://land.c0ffee.space/images/full/gallery-1-1.webp"
         },
         {
-            "file": "gallery-1-2.jpg"
+            "file": "https://land.c0ffee.space/images/full/gallery-1-2.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-1-2.webp",
+            "full": "https://land.c0ffee.space/images/full/gallery-1-2.webp"
         },
         {
             "name": "世纪大桥，凌晨",
@@ -27,7 +40,7 @@
         {
             "name": "Lanying's Blog",
             "desc": "一只青苹果小狼~",
-            "image": "/images/friend-lanying.jpg",
+            "image": "https://land.c0ffee.space/images/thumb/friend-lanying.webp",
             "url": "https://blog.yufurry.cn"
         },
         {
@@ -39,13 +52,13 @@
         {
             "name": "陨落基围虾",
             "desc": "好看的皮囊千篇一律，有趣的灵魂万里挑一",
-            "image": "/images/friend-fshrimp.jpg",
+            "image": "https://land.c0ffee.space/images/thumb/friend-fshrimp.webp",
             "url": "https://fshrimp.top"
         },
         {
             "name": "apanzinc",
             "desc": "我是 apanzinc，一名初三学生，专注于前后端开发与人工智能应用的学习与实践。",
-            "image": "/images/friend-apanzinc.png",
+            "image": "https://land.c0ffee.space/images/thumb/friend-apanzinc.webp",
             "url": "https://apanzinc.top"
         },
         {
@@ -58,7 +71,7 @@
             "name": "0xd3ac.log",
             "url": "https://blog.0xd3ac.dev",
             "desc": "今でもあなたは私の光。",
-            "image": "/images/friend-sylphy.jpg"
+            "image": "https://land.c0ffee.space/images/thumb/friend-sylphy.webp"
         },
         {
             "name": "零域小站",
