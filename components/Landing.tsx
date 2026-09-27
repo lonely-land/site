@@ -3,9 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import styles from './Landing.module.css';
+import settings from '@/settings.json';
 
 const TITLE_WORDS = ['Hello,', "I'm", 'Lonely.'];
 const SUBTITLE_WORDS = ['Take', 'picture,', 'write', 'code', 'and', 'design', 'product.'];
+
+// 背景图托管在 R2，地址放 settings.json；
+// 若配置缺失则回退到仓库内路径（本地开发时可能还在）
+const BACKGROUND_IMAGE =
+  (settings as { landing?: { background?: string } }).landing?.background || '/images/landing-bg.png';
 
 /**
  * Landing Page - 1:1 还原 .figma/1_2
@@ -25,7 +31,7 @@ export default function Landing() {
   useEffect(() => {
     const img = new Image();
     img.onload = () => setImageLoaded(true);
-    img.src = '/images/landing-bg.png';
+    img.src = BACKGROUND_IMAGE;
 
     // 3.5 秒超时：无论图片是否加载完成、动画是否播完，强制就绪
     // 避免用户被永久锁在黑屏 Landing 上
@@ -99,7 +105,11 @@ export default function Landing() {
   }, [imageLoaded, animDone]);
 
   return (
-    <div className={styles.landingPage} ref={containerRef}>
+    <div
+      className={styles.landingPage}
+      ref={containerRef}
+      style={{ '--landing-bg': `url("${BACKGROUND_IMAGE}")` } as React.CSSProperties}
+    >
       <div className={styles.bgOverlay} ref={overlayRef} />
       <p className={styles.title} ref={titleRef}>
         {TITLE_WORDS.map((word, i) => (

@@ -36,6 +36,6 @@ body:
     id: image
     attributes:
       label: 站点截图 / 头像
-      description: 上传一张图片作为卡片背景（建议 16:9 或横向图片）。
+      description: 直接粘贴或拖入一张图片（建议 16:9 或横向）；也可以贴任意公开图片直链。机器人会自动转存到图床。
     validations:
       required: true

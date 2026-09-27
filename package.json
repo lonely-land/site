@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "gen-thumbs": "node scripts/gen-thumbs.mjs"
+    "test": "node --test test/*.mjs",
+    "images:migrate": "node scripts/migrate-images-to-r2.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",

@@ -1,0 +1,71 @@
+name: Upload Images to R2
+
+# 触发：push 到 main 且 public/images/** 有变化；也可手动触发做一次性同步。
+# 该工作流只上传，不修改仓库内容，不会 commit / push 任何东西。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/images/**'
+  workflow_dispatch:
+
+# 最小权限：只需要读代码
+permissions:
+  contents: read
+
+# 同一分支串行执行，避免并发推送互相覆盖同一批对象
+concurrency:
+  group: upload-r2-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 只打印变量名，绝不打印取值
+      - name: Check R2 secrets
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
+        run: |
+          missing=0
+          for name in R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET R2_PUBLIC_BASE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::缺少 repository secret: $name"
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+          echo "R2 secrets 已配置（仅校验存在性，未打印取值）"
+
+      # --sync = --apply + 不写 settings.json + 绝不删除本地图片
+      # 已存在且大小一致的对象会自动跳过，因此可以安全地重复执行（幂等）。
+      - name: Upload images to R2
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
+        run: node scripts/migrate-images-to-r2.mjs --sync
