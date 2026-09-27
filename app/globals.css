@@ -5,6 +5,19 @@
 :root {
   --color-ink: #101010;
   --color-ink-soft: #000000cc;
+
+  /* 每个 Block（Landing / Gallery / Friends / Footer）的高度。
+     移动端浏览器地址栏会占掉一部分高度：100vh 取的是「工具栏收起」的大视口，
+     于是 Block 底部（Footer 的 Lonely 大字就在 bottom: 0）会被顶到屏幕外看不见。
+     svh 取的是「工具栏展开」的最小视口，永远完整可见；
+     不支持 svh 的旧浏览器回退到 100vh。 */
+  --block-height: 100vh;
+}
+
+@supports (height: 100svh) {
+  :root {
+    --block-height: 100svh;
+  }
 }
 
 * {

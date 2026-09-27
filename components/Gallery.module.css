@@ -5,7 +5,7 @@
   background: #101010;
   padding: 3vh 0 4vh 4vw;
   width: 100vw;
-  height: 100vh;
+  height: var(--block-height);
   overflow: hidden;
 }
 
@@ -155,10 +155,14 @@
   transform-origin: left center;
 }
 
+/* 箭头图标：react-icons 组件默认 size="1em"，这里用固定尺寸 + padding 还原
+   原手绘 SVG 的留白比例，避免填充图标显得过大 */
 .arrowRight {
   margin-top: 4px;
   width: clamp(28px, 3vw, 47px);
   height: clamp(28px, 3vw, 47px);
+  padding: clamp(4px, 0.6vw, 8px);
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -185,7 +189,8 @@
   to { opacity: 1; }
 }
 
-/* 关闭按钮 */
+/* 关闭按钮：图标尺寸跟随 font-size（react-icons 默认 size="1em"），
+   与原文字号 × 的光学大小保持一致 */
 .lightboxClose {
   position: absolute;
   top: 24px;
@@ -193,7 +198,7 @@
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 48px;
+  font-size: 34px;
   line-height: 1;
   cursor: pointer;
   z-index: 10001;
@@ -206,6 +211,7 @@
 }
 
 /* 导航箭头 */
+/* 导航箭头：图标尺寸跟随 font-size，与关闭按钮保持同一视觉量级 */
 .lightboxNav {
   position: absolute;
   top: 50%;
@@ -213,7 +219,7 @@
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 64px;
+  font-size: 40px;
   line-height: 1;
   cursor: pointer;
   z-index: 10001;
@@ -287,7 +293,7 @@
 @media (max-width: 767px) {
   .gallery2 {
     width: 100vw;
-    height: 100vh;
+    height: var(--block-height);
     padding: 40px 20px 60px;
     align-items: center;
   }
@@ -339,11 +345,11 @@
   .lightboxClose {
     top: 16px;
     right: 20px;
-    font-size: 36px;
+    font-size: 26px;
   }
 
   .lightboxNav {
-    font-size: 40px;
+    font-size: 28px;
   }
 
   .lightboxPrev {

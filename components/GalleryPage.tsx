@@ -9,6 +9,7 @@ import 'yet-another-react-lightbox/styles.css';
 import styles from './GalleryPage.module.css';
 import settings from '@/settings.json';
 import { type GalleryItem, imgSrc, thumbSrc, fullSrc } from '@/lib/gallery';
+import { identityRange, shuffleRange } from '@/lib/shuffle';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -52,6 +53,13 @@ function GalleryCard({
 
 export default function GalleryPage() {
   const items = settings.gallery as GalleryItem[];
+
+  // 卡片随机排序：SSR 首帧按原始顺序渲染（保证 hydration 一致），挂载后洗牌
+  const [order, setOrder] = useState<number[]>(() => identityRange(items.length));
+  useEffect(() => {
+    setOrder(shuffleRange(items.length));
+  }, [items.length]);
+
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -69,6 +77,7 @@ export default function GalleryPage() {
   }, []);
 
   // 入场动画：卡片从下方淡入，完成后清除 will-change 释放 GPU 层
+  // 依赖 order：洗牌后会重建动画，保证 stagger 顺序与最终排列一致
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.to(`.${styles.card}`, {
@@ -89,7 +98,7 @@ export default function GalleryPage() {
     }, gridRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [order]);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -101,11 +110,15 @@ export default function GalleryPage() {
 
   // 键盘事件由 Lightbox 库处理
 
-  const slides = items.map((item) => ({
-    src: fullSrc(item.file),
-    alt: item.name || '',
-    title: item.name,
-  }));
+  // 灯箱轮播顺序与页面上的排列保持一致
+  const slides = order.map((itemIndex) => {
+    const item = items[itemIndex];
+    return {
+      src: fullSrc(item.file),
+      alt: item.name || '',
+      title: item.name,
+    };
+  });
 
   return (
     <div className={styles.page}>
@@ -115,15 +128,18 @@ export default function GalleryPage() {
       </header>
 
       <div ref={gridRef} className={styles.grid}>
-        {items.map((item, index) => (
-          <GalleryCard
-            key={index}
-            item={item}
-            index={index}
-            onClick={() => openLightbox(index)}
-            cardRef={(el) => { cardRefs.current[index] = el; }}
-          />
-        ))}
+        {order.map((itemIndex, position) => {
+          const item = items[itemIndex];
+          return (
+            <GalleryCard
+              key={itemIndex}
+              item={item}
+              index={position}
+              onClick={() => openLightbox(position)}
+              cardRef={(el) => { cardRefs.current[position] = el; }}
+            />
+          );
+        })}
       </div>
 
       <Lightbox

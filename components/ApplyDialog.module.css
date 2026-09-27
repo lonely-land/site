@@ -36,6 +36,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 图标用 react-icons 组件（默认 size="1em"），跟随字号缩放 */
+  font-size: 22.5px;
   color: #D4D4D4;
   transition: color 0.2s ease;
 }
@@ -110,6 +112,13 @@
 .btnMain {
   font-size: 32px;
   line-height: 1.25;
+}
+
+/* 按钮里的品牌图标：与 32px 主文字视觉等重 */
+.btnIcon {
+  flex-shrink: 0;
+  font-size: 28px;
+  line-height: 1;
 }
 
 .btnSub {
