@@ -34,6 +34,21 @@
         {
             "name": "世纪大桥，凌晨",
             "file": "https://huggingface.co/buckets/StarrySkyWorld/Cuz-Backup/resolve/shijidaqiao_260702_0648.JPG"
+        },
+        {
+            "name": "E2E 图一",
+            "file": "https://land.c0ffee.space/images/full/gallery-16-1.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-16-1.webp"
+        },
+        {
+            "name": "E2E 图二 尾部全角括号",
+            "file": "https://land.c0ffee.space/images/full/gallery-16-2.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-16-2.webp"
+        },
+        {
+            "name": "E2E 图三 带 query",
+            "file": "https://land.c0ffee.space/images/full/gallery-16-4.webp",
+            "thumb": "https://land.c0ffee.space/images/thumb/gallery-16-4.webp"
         }
     ],
     "friends": [
