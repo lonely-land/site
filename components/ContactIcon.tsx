@@ -1,34 +1,52 @@
 'use client';
 
-import type { IconType } from 'react-icons';
-import { FaGithub, FaEnvelope, FaTelegram, FaQq, FaLink } from 'react-icons/fa6';
+import { Link as LinkIcon, Mail } from 'lucide-react';
+import BrandIcon, { hasBrandIcon } from './BrandIcon';
 
 /**
  * 联系方式图标
  *
- * 统一使用 Font Awesome 6 图标组件（react-icons/fa6），不再依赖 public/icons 下
- * 手写的 SVG 文件：
- * - 同一套填充风格 + `currentColor`，hover / 深色背景下自动跟随文字颜色
- * - 尺寸由 CSS 的 font-size 控制（react-icons 默认 size="1em"），
- *   和文字一起响应式缩放
+ * settings.json 的 `icon` 字段是这里的映射键：
+ * - github / telegram / qq → simple-icons 品牌标（单色，跟随 currentColor）
+ * - mail → lucide Mail（描边，strokeWidth 与品牌标光学等重）
+ * - 未识别的键 → lucide Link 兜底，不会出现空白
  *
- * settings.json 里的 `icon` 字段是这里的映射键；新增键时同步补充 ICON_MAP 即可，
- * 未识别的键回退到通用链接图标而不是空白。
+ * 尺寸交给 CSS（.contactIcon 用 em 跟随文字字号），和文字一起响应式缩放。
  */
-const ICON_MAP: Record<string, IconType> = {
-  github: FaGithub,
-  mail: FaEnvelope,
-  telegram: FaTelegram,
-  qq: FaQq,
-};
+const STROKE_WIDTH = 1.75;
 
 export default function ContactIcon({
   name,
+  size = 24,
   className,
 }: {
   name: string;
+  size?: number;
   className?: string;
 }) {
-  const Icon = ICON_MAP[name] ?? FaLink;
-  return <Icon className={className} aria-hidden focusable="false" />;
+  if (hasBrandIcon(name)) {
+    return <BrandIcon name={name} size={size} className={className} />;
+  }
+
+  if (name === 'mail') {
+    return (
+      <Mail
+        className={className}
+        size={size}
+        strokeWidth={STROKE_WIDTH}
+        aria-hidden
+        focusable="false"
+      />
+    );
+  }
+
+  return (
+    <LinkIcon
+      className={className}
+      size={size}
+      strokeWidth={STROKE_WIDTH}
+      aria-hidden
+      focusable="false"
+    />
+  );
 }

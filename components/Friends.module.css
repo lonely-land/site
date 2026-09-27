@@ -1,21 +1,19 @@
+/* Friends（友链堆叠）
+   排版/颜色/圆角/阴影/动效全部走 globals.css 的 token */
 .friends {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #101010;
+  background: var(--ink);
   width: 100%;
   height: 100%;
   overflow: hidden;
   position: relative;
 }
 
+/* 区块标题：字体字号由全局 .sectionTitle 提供（原来是 Intel One Mono 等宽体，全站最跳） */
 .title {
   margin: 7vh 0 0;
-  line-height: 1.2;
-  color: #ffffff;
-  font-family: 'Intel One Mono', 'Courier New', monospace;
-  font-size: clamp(28px, 4vw, 48px);
-  font-weight: 500;
 }
 
 .stackWrapper {
@@ -46,18 +44,18 @@
   left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 15px;
+  border-radius: var(--radius-card);
   overflow: hidden;
-  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-1);
   text-decoration: none;
-  color: #fff;
+  color: var(--text);
   /* 桌面端：水平堆叠 */
   transform: translateX(calc(var(--peek) * var(--offset, 0)));
-  transition: box-shadow 0.3s ease, filter 0.3s ease;
+  transition: box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
 }
 
 .card:hover {
-  box-shadow: 6px 8px 16px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-2);
   filter: brightness(1.1);
 }
 
@@ -70,15 +68,21 @@
   object-fit: cover;
 }
 
+/* 非当前卡片统一压暗：堆叠时露出的边缘不会再出现高饱和色带 */
 .cardOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 10, 0.8);
-  transition: background 0.3s ease;
+  background: var(--scrim-card);
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+/* 当前卡片：底部渐变保证文字可读，同时让卡片本身透出照片 */
+.isFront .cardOverlay {
+  background: linear-gradient(0deg, var(--scrim-strong) 0%, var(--scrim) 62%);
 }
 
 .card:hover .cardOverlay {
-  background: rgba(10, 10, 10, 0.6);
+  background: var(--scrim);
 }
 
 .cardContent {
@@ -88,40 +92,41 @@
   padding: clamp(16px, 2.5vw, 30px);
   z-index: 1;
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity var(--dur-base) var(--ease-out);
 }
 
 .isFront .cardContent {
   opacity: 1;
 }
 
+/* 中英混排：拉丁走 Satoshi，中文回退到 Alimama */
 .cardName {
   margin: 0;
-  font-family: var(--font-alimama), 'Inclusive Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
   font-weight: 500;
-  font-size: clamp(20px, 3vw, 42px);
-  line-height: 1.1;
-  color: #fff;
+  font-size: var(--fs-h2);
+  line-height: 1.15;
+  color: var(--text);
   word-break: break-word;
 }
 
 .cardDesc {
-  margin: 8px 0 0;
-  font-family: var(--font-alimama), 'Winky Rough', 'PingFang SC', 'Microsoft YaHei', cursive;
-  font-weight: 600;
-  font-size: clamp(12px, 1.8vw, 26px);
-  line-height: 1.2;
-  color: #fff;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-weight: 400;
+  font-size: var(--fs-body);
+  line-height: 1.35;
+  color: var(--text-dim);
 }
 
 /* ---- Apply 卡片 ---- */
 .applyCard {
-  background: #222;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  background: var(--ink-3);
+  transition: background var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 
 .applyCard:hover {
-  background: #2c2c2c;
+  background: var(--surface-2);
   filter: none;
 }
 
@@ -133,23 +138,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
+  color: var(--text);
 }
 
+/* 原来是文字 "+"，现在与全站图标统一走 lucide Plus */
 .plus {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 300;
-  font-size: clamp(32px, 4vw, 56px);
-  line-height: 1;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plus > svg {
+  width: clamp(24px, 2.6vw, 36px);
+  height: clamp(24px, 2.6vw, 36px);
 }
 
 .applyText {
-  font-family: 'Baloo Da 2', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-satoshi), var(--font-fallback);
   font-weight: 500;
-  font-size: clamp(14px, 1.8vw, 24px);
+  font-size: var(--fs-body);
   line-height: 1;
-  color: #fff;
+  color: var(--text);
 }
 
 /* ---- 移动端：竖向堆叠 ---- */
@@ -160,8 +170,7 @@
   }
 
   .title {
-    margin: 0 0 0;
-    font-size: clamp(24px, 7vw, 32px);
+    margin: 0;
   }
 
   .stack {
@@ -184,6 +193,6 @@
     left: 50%;
     transform: translateX(-50%);
     flex-direction: row;
-    gap: 6px;
+    gap: var(--space-2);
   }
 }

@@ -19,7 +19,7 @@ export default function Footer() {
 
   return (
     <div className={styles.footer}>
-      <p className={styles.contact}>Contact</p>
+      <p className={`sectionTitle ${styles.contact}`}>Contact</p>
       <div className={styles.autoWrapper}>
         <div className={styles.frame1}>
           {links.map((item, index) => (

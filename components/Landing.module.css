@@ -1,3 +1,6 @@
+/* Landing
+   注意：这一块是 1440×1024 的固定设计画布，外层 BlockScaleWrapper 会整体缩放，
+   所以这里的尺寸用「画布 px」而不是 vw，避免二次缩放。 */
 .landingPage {
   position: relative;
   padding: 0 120px 26px;
@@ -5,32 +8,28 @@
   height: 1024px;
   overflow: hidden;
   /* 背景图地址来自 settings.json（已托管在 R2），由组件内联设置 --landing-bg */
-  background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), var(--landing-bg, none);
+  background-image: linear-gradient(var(--scrim), var(--scrim)), var(--landing-bg, none);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
 }
 
-/* 初始黑色遮罩：动画完成且图片加载后淡出 */
+/* 初始遮罩：动画完成且图片加载后淡出 */
 .bgOverlay {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: var(--ink);
   z-index: 1;
   pointer-events: none;
 }
 
+/* hero：字体来自全局 .heroTitle（Boska），这里只给画布内尺寸与定位 */
 .title {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 2;
-  margin: 0;
-  line-height: 120px;
-  letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Cabinet Grotesk Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
   font-size: 96px;
   text-align: center;
   white-space: nowrap;
@@ -48,12 +47,8 @@
   left: 50%;
   transform: translate(-50%, calc(-50% + 85px));
   z-index: 2;
-  margin: 0;
-  line-height: 30px;
-  letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Cabinet Grotesk Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
   font-size: 24px;
+  color: var(--text);
   text-align: center;
 }
 
@@ -63,12 +58,8 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  margin: 0;
-  line-height: 28px;
-  letter-spacing: 0;
-  color: #ffffff66;
-  font-family: "Cabinet Grotesk Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
   font-size: 20px;
+  color: var(--text-mute);
 }
 
 @media (max-width: 767px) {
@@ -98,7 +89,7 @@
     left: auto;
     transform: none;
     margin-top: 16px;
-    font-size: clamp(16px, 4.5vw, 24px);
+    font-size: clamp(15px, 4.5vw, 24px);
     line-height: 1.4;
   }
 

@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import gsap from 'gsap';
+import { Plus } from 'lucide-react';
 import styles from './Friends.module.css';
 import settings from '@/settings.json';
 import { identityRange, shuffleOrIdentity } from '@/lib/shuffle';
+import { DURATION, EASE } from '@/lib/motion';
 import ApplyDialog from './ApplyDialog';
 
 type FriendItem = {
@@ -82,8 +84,8 @@ export default function Friends() {
         [m ? 'y' : 'x']: peek * position,
         [m ? 'x' : 'y']: 0,
         zIndex: 10 + friends.length - position,
-        duration: 0.5,
-        ease: 'power3.out',
+        duration: DURATION.base,
+        ease: EASE.out,
       });
     });
   }, [order, friends.length]);
@@ -175,7 +177,7 @@ export default function Friends() {
         // 未达阈值 → 弹回
         const frontCard = cardRefs.current[order[0]];
         if (frontCard) {
-          gsap.to(frontCard, { y: 0, duration: 0.3, ease: 'power3.out' });
+          gsap.to(frontCard, { y: 0, duration: DURATION.fast, ease: EASE.out });
         }
       }
 
@@ -202,7 +204,7 @@ export default function Friends() {
 
   return (
     <div className={styles.friends}>
-      <p className={styles.title}>Friends</p>
+      <h2 className={`sectionTitle ${styles.title}`}>Friends</h2>
       <div className={styles.stackWrapper}>
         <div
           ref={stackRef}
@@ -222,7 +224,9 @@ export default function Friends() {
             }}
           >
             <div className={styles.applyContent}>
-              <span className={styles.plus}>+</span>
+              <span className={styles.plus}>
+                <Plus strokeWidth={2} aria-hidden focusable="false" />
+              </span>
               <span className={styles.applyText}>Apply</span>
             </div>
           </a>

@@ -1,3 +1,7 @@
+/* ApplyDialog：与全站卡片同一套设计语言。
+   面板浮在 --ink 页面之上（--ink-2 + --line 描边 + --radius-card），
+   尺寸全部走 token / 相对单位，没有任何固定像素画布与绝对定位。 */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -5,126 +9,159 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
-  animation: overlayIn 0.2s ease-out;
-}
-
-.scaleWrapper {
-  width: 740px;
-  height: 325px;
-  flex-shrink: 0;
+  padding: var(--space-5);
+  background: var(--scrim-strong);
+  animation: overlayIn var(--dur-fast) var(--ease-out);
 }
 
 .dialog {
-  position: relative;
-  background: #101010;
-  width: 740px;
-  height: 325px;
-  animation: dialogIn 0.25s ease-out;
-}
-
-.closeBtn {
-  position: absolute;
-  left: 678px;
-  top: 42px;
-  width: 22.5px;
-  height: 22.5px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  /* 图标用 react-icons 组件（默认 size="1em"），跟随字号缩放 */
-  font-size: 22.5px;
-  color: #D4D4D4;
-  transition: color 0.2s ease;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: min(740px, calc(100vw - 2 * var(--space-5)));
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-6);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-3);
+  animation: dialogIn var(--dur-base) var(--ease-out);
 }
 
-.closeBtn:hover {
-  color: #fff;
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.headText {
+  min-width: 0;
 }
 
 .title {
-  position: absolute;
-  left: 31px;
-  top: 26px;
   margin: 0;
-  font-family: 'Satoshi Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-boska), var(--font-fallback);
   font-weight: 400;
-  font-size: 40px;
-  line-height: 1.35;
-  color: #fff;
-  white-space: nowrap;
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  text-wrap: balance;
 }
 
+/* 全局 .caption 负责字体/字号/颜色，这里只补间距 */
 .subtitle {
-  position: absolute;
-  left: 32px;
-  top: 80px;
-  margin: 0;
-  font-family: 'Satoshi Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-weight: 400;
-  font-size: 24px;
-  line-height: 1.33;
-  color: #fff;
-  white-space: nowrap;
+  margin-top: var(--space-2);
+}
+
+.closeBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-chip);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.closeBtn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.closeBtn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .buttons {
-  position: absolute;
-  left: 22px;
-  top: 227px;
   display: flex;
-  gap: 37px;
+  gap: var(--space-3);
 }
 
 .btn {
-  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  gap: var(--space-2);
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  background: var(--surface-1);
+  border-radius: var(--radius-chip);
+  color: var(--text);
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.2;
   text-decoration: none;
-  color: #fff;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 400;
-  transition: background 0.2s ease;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-2);
 }
 
-.btnGithub {
-  width: 381px;
-  height: 62px;
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.btnMail {
-  width: 248px;
-  height: 62px;
+/* 图标：显式 px 尺寸（由组件 size prop 给出），与文字光学对齐 */
+.btnIcon {
+  flex-shrink: 0;
+  color: var(--text-dim);
 }
 
 .btnMain {
-  font-size: 32px;
-  line-height: 1.25;
+  font-weight: 500;
 }
 
-/* 按钮里的品牌图标：与 32px 主文字视觉等重 */
-.btnIcon {
-  flex-shrink: 0;
-  font-size: 28px;
-  line-height: 1;
+/* Github 的 (recommend) 提示：保留文案，权重降到最弱一级 */
+.btnHint {
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  color: var(--text-mute);
 }
 
-.btnSub {
-  font-size: 24px;
-  line-height: 1.25;
-  color: rgba(255, 255, 255, 0.32);
+/* 窄屏：按钮撑满整行并纵向排列（无固定像素、无缩放 hack） */
+@media (max-width: 560px) {
+  .overlay {
+    padding: var(--space-3);
+  }
+
+  .dialog {
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  /* 移动端把关闭热区再放宽到 48px */
+  .closeBtn {
+    width: var(--space-7);
+    height: var(--space-7);
+  }
 }
 
 @keyframes overlayIn {
@@ -135,58 +172,4 @@
 @keyframes dialogIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@media (max-width: 780px) {
-  .scaleWrapper {
-    width: calc(100vw - 40px);
-    height: auto;
-  }
-
-  .dialog {
-    width: 100%;
-    height: auto;
-    padding: 24px 20px 20px;
-  }
-
-  .closeBtn {
-    left: auto;
-    top: 20px;
-    right: 20px;
-  }
-
-  .title {
-    position: static;
-    font-size: clamp(26px, 7vw, 36px);
-    white-space: normal;
-    padding-right: 36px;
-    margin: 0 0 4px;
-  }
-
-  .subtitle {
-    position: static;
-    font-size: clamp(16px, 4.5vw, 22px);
-    white-space: normal;
-  }
-
-  .buttons {
-    position: static;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 40px;
-  }
-
-  .btnGithub,
-  .btnMail {
-    width: 100%;
-    height: 52px;
-  }
-
-  .btnMain {
-    font-size: clamp(20px, 5.5vw, 28px);
-  }
-
-  .btnSub {
-    font-size: clamp(14px, 3.5vw, 20px);
-  }
 }

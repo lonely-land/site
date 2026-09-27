@@ -1,21 +1,19 @@
+/* Gallery（首页横向画廊）
+   排版/颜色/圆角/动效全部走 globals.css 的 token */
 .gallery2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background: #101010;
+  background: var(--ink);
   padding: 3vh 0 4vh 4vw;
   width: 100vw;
   height: var(--block-height);
   overflow: hidden;
 }
 
+/* 区块标题：字体字号由全局 .sectionTitle 提供，这里只留位置（偏右的编辑感排版） */
 .gallery {
   margin: 0 0 0 37vw;
-  line-height: 1.2;
-  letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Boska Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(48px, 7vw, 96px);
 }
 
 .autoWrapper {
@@ -32,7 +30,7 @@
   overflow-y: hidden;
   flex-wrap: nowrap;
   scrollbar-width: none;
-  border-radius: 9px;
+  border-radius: var(--radius-media);
   /* 允许横向触摸滚动，纵向交给拨码轮 */
   touch-action: pan-x;
 }
@@ -47,11 +45,11 @@
   flex-shrink: 0;
   height: 100%;
   aspect-ratio: 940 / 529;
-  border-radius: 9px;
+  border-radius: var(--radius-card);
   overflow: hidden;
-  background: #1a1a1a;
+  background: var(--ink-2);
   /* 用 box-shadow 替代 drop-shadow（GPU 开销更低） */
-  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-1);
 }
 
 /* 有标题的图片项：添加内边距以容纳标题 */
@@ -65,9 +63,9 @@
 .skeleton {
   position: absolute;
   inset: 0;
-  background: linear-gradient(110deg, #1a1a1a 30%, #2a2a2a 50%, #1a1a1a 70%);
+  background: linear-gradient(110deg, var(--ink-2) 30%, var(--ink-3) 50%, var(--ink-2) 70%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.5s var(--ease-in-out) infinite;
   z-index: 1;
 }
 
@@ -85,7 +83,7 @@
   object-fit: cover;
   opacity: 0;
   transform: scale(1);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
   z-index: 0;
 }
 
@@ -102,7 +100,7 @@
 .overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #000000cc 11.53%, #66666600 32.99%);
+  background: linear-gradient(0deg, var(--scrim-strong) 11.53%, transparent 32.99%);
   z-index: 1;
   pointer-events: none;
 }
@@ -110,17 +108,19 @@
 .itemTitle {
   position: relative;
   z-index: 2;
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-h2);
+  font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(24px, 3vw, 40px);
+  color: var(--text);
 }
 
 .autoWrapper2 {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--space-4);
   margin-top: 2vh;
   padding-left: 1vw;
 }
@@ -128,19 +128,21 @@
 .galleryLink {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   text-decoration: none;
   position: relative;
   cursor: pointer;
+  color: var(--text);
 }
 
 .galleryLinkText {
   position: relative;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-h2);
+  font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(24px, 3.5vw, 48px);
+  color: var(--text);
   white-space: nowrap;
 }
 
@@ -150,20 +152,16 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #ffffff;
+  background: var(--text);
   transform: scaleX(0);
   transform-origin: left center;
 }
 
-/* 箭头图标：react-icons 组件默认 size="1em"，这里用固定尺寸 + padding 还原
-   原手绘 SVG 的留白比例，避免填充图标显得过大 */
+/* 箭头图标：lucide 描边图标，尺寸与链接文字（--fs-h2）光学匹配 */
 .arrowRight {
-  margin-top: 4px;
-  width: clamp(28px, 3vw, 47px);
-  height: clamp(28px, 3vw, 47px);
-  padding: clamp(4px, 0.6vw, 8px);
-  box-sizing: border-box;
-  overflow: hidden;
+  flex-shrink: 0;
+  width: clamp(22px, 2.2vw, 30px);
+  height: clamp(22px, 2.2vw, 30px);
 }
 
 /* 可点击的图片项 */
@@ -179,9 +177,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.92);
+  background: var(--scrim-strong);
   user-select: none;
-  animation: lightboxFadeIn 0.3s ease;
+  animation: lightboxFadeIn var(--dur-base) var(--ease-out);
 }
 
 @keyframes lightboxFadeIn {
@@ -189,54 +187,74 @@
   to { opacity: 1; }
 }
 
-/* 关闭按钮：图标尺寸跟随 font-size（react-icons 默认 size="1em"），
-   与原文字号 × 的光学大小保持一致 */
+/* 关闭按钮：图标尺寸显式给到 svg（lucide 默认 24px） */
 .lightboxClose {
   position: absolute;
   top: 24px;
   right: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   background: none;
   border: none;
-  color: #ffffff;
-  font-size: 34px;
-  line-height: 1;
+  border-radius: var(--radius-pill);
+  color: var(--text);
   cursor: pointer;
   z-index: 10001;
   opacity: 0.7;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.lightboxClose > svg {
+  width: 28px;
+  height: 28px;
 }
 
 .lightboxClose:hover {
   opacity: 1;
+  background: var(--surface-2);
 }
 
-/* 导航箭头 */
-/* 导航箭头：图标尺寸跟随 font-size，与关闭按钮保持同一视觉量级 */
+/* 导航箭头：与关闭按钮同一视觉量级 */
 .lightboxNav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   background: none;
   border: none;
-  color: #ffffff;
-  font-size: 40px;
-  line-height: 1;
+  border-radius: var(--radius-pill);
+  color: var(--text);
   cursor: pointer;
   z-index: 10001;
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.lightboxNav > svg {
+  width: 32px;
+  height: 32px;
 }
 
 .lightboxNav:hover {
   opacity: 1;
+  background: var(--surface-2);
 }
 
 .lightboxPrev {
-  left: 32px;
+  left: 24px;
 }
 
 .lightboxNext {
-  right: 32px;
+  right: 24px;
 }
 
 /* 灯箱内容 */
@@ -252,10 +270,10 @@
   max-width: 90vw;
   max-height: 80vh;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-media);
   opacity: 0;
   transform: scale(0.95);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 
 .lightboxImageLoaded {
@@ -270,8 +288,8 @@
   transform: translate(-50%, -50%);
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #ffffff;
+  border: 3px solid var(--line);
+  border-top-color: var(--text);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   z-index: 10000;
@@ -282,11 +300,11 @@
 }
 
 .lightboxTitle {
-  margin: 16px 0 0;
-  color: #ffffff;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(16px, 2vw, 24px);
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-lead);
   font-weight: 500;
+  color: var(--text);
   text-align: center;
 }
 
@@ -300,14 +318,13 @@
 
   .gallery {
     margin: 0;
-    font-size: clamp(36px, 10vw, 64px);
   }
 
   .autoWrapper {
     flex: none;
     height: 50vh;
     margin-top: 32px;
-    gap: 16px;
+    gap: var(--space-4);
     width: 100%;
     padding-right: 20px;
   }
@@ -322,10 +339,6 @@
     padding: 0 20px 16px;
   }
 
-  .itemTitle {
-    font-size: clamp(20px, 5vw, 32px);
-  }
-
   .autoWrapper2 {
     justify-content: center;
     margin-top: 24px;
@@ -333,31 +346,39 @@
     width: 100%;
   }
 
-  .galleryLinkText {
-    font-size: clamp(20px, 5vw, 32px);
-  }
-
   .arrowRight {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
   }
 
   .lightboxClose {
-    top: 16px;
-    right: 20px;
-    font-size: 26px;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .lightboxClose > svg {
+    width: 24px;
+    height: 24px;
   }
 
   .lightboxNav {
-    font-size: 28px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .lightboxNav > svg {
+    width: 26px;
+    height: 26px;
   }
 
   .lightboxPrev {
-    left: 12px;
+    left: 8px;
   }
 
   .lightboxNext {
-    right: 12px;
+    right: 8px;
   }
 
   .lightboxImage {
