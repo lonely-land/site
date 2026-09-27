@@ -61,23 +61,49 @@ jobs:
           R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
         run: node .github/scripts/process-friend-submission.mjs
 
-      - name: Create Pull Request
+      - name: Create or update Pull Request
         if: steps.process.outputs.has-friend == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
           branch="friend-submission-${ISSUE_NUMBER}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
-          # 截图已经在 R2 上，仓库里只留下 settings.json 的记录
-          git add settings.json
-          git commit -m "Add friend link from #${ISSUE_NUMBER}"
-          git push origin "$branch" --force-with-lease
-          gh pr create \
-            --title "Add friend link from #${ISSUE_NUMBER}" \
-            --body-file pr-body.md \
-            --head "$branch" \
-            --base "${{ github.event.repository.default_branch }}" \
-            --label "friend-submission"
+
+          # 表单自带标签，Issue 会同时触发 opened 与 labeled 两次；
+          # 这里做成幂等：分支已存在且 settings.json 内容一致时不再重复提交推送
+          branch_exists=false
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            branch_exists=true
+            git fetch -q origin "$branch"
+          fi
+
+          if [ "$branch_exists" = true ] && git diff --quiet FETCH_HEAD -- settings.json; then
+            echo "分支 $branch 的 settings.json 与本次生成一致，跳过提交与推送。"
+          else
+            git checkout -b "$branch"
+            # 图片已经在 R2 上，仓库里只留下 settings.json 的地址记录
+            git add settings.json
+            git commit -m "Add friend link from #${ISSUE_NUMBER}"
+            if [ "$branch_exists" = true ]; then
+              git push origin "$branch" --force-with-lease
+            else
+              git push origin "$branch"
+            fi
+          fi
+
+          if gh pr view "$branch" --repo "$REPO" >/dev/null 2>&1; then
+            gh pr edit "$branch" --repo "$REPO" --body-file pr-body.md
+            echo "PR 已存在，仅更新正文。"
+          else
+            gh pr create \
+              --repo "$REPO" \
+              --title "Add friend link from #${ISSUE_NUMBER}" \
+              --body-file pr-body.md \
+              --head "$branch" \
+              --base "${{ github.event.repository.default_branch }}" \
+              --label "friend-submission"
+          fi
