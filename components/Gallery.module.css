@@ -312,36 +312,43 @@
   .gallery2 {
     width: 100vw;
     height: var(--block-height);
-    padding: 40px 20px 60px;
-    align-items: center;
+    /* 左右内边距交给卡片行，卡片能滑到视口边缘 */
+    padding: 48px 0;
+    /* 整组垂直居中，不再把空白全堆在底部 */
+    justify-content: center;
+    align-items: stretch;
   }
 
+  /* 标题与卡片左对齐（桌面端标题本来就是偏右的编辑感排版） */
   .gallery {
-    margin: 0;
+    margin: 0 0 0 20px;
   }
 
   .autoWrapper {
     flex: none;
-    height: 50vh;
-    margin-top: 32px;
+    height: auto;
+    margin-top: var(--space-5);
     gap: var(--space-4);
     width: 100%;
-    padding-right: 20px;
+    padding: 0 20px;
+    /* 让下一张卡露出约 18vw：明确"可以横向滑" */
+    scroll-padding-left: 20px;
   }
 
+  /* 78vw + 4:3：露出下一张，横向照片也不会被裁成竖图 */
   .galleryItem {
-    width: 85vw;
-    height: 100%;
-    aspect-ratio: auto;
+    width: 78vw;
+    height: auto;
+    aspect-ratio: 4 / 3;
   }
 
   .withName {
-    padding: 0 20px 16px;
+    padding: 0 16px 14px;
   }
 
   .autoWrapper2 {
     justify-content: center;
-    margin-top: 24px;
+    margin-top: var(--space-5);
     padding: 0;
     width: 100%;
   }

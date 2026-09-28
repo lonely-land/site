@@ -73,7 +73,8 @@
   transform: scaleX(1);
 }
 
-/* 底部 Lonely 描边大字：装饰性水印，字号单独一档，属于有意的层级对比 */
+/* 底部 Lonely 描边大字：装饰性水印，字号单独一档，属于有意的层级对比。
+   字体用无衬线 Satoshi（保留原来的观感），呼应区块标题的展示字体但不跟随 */
 .lonely {
   position: absolute;
   bottom: 0;
@@ -83,7 +84,7 @@
   line-height: 0.85;
   letter-spacing: 0;
   color: var(--ink);
-  font-family: var(--font-boska), var(--font-fallback);
+  font-family: var(--font-satoshi), var(--font-fallback);
   font-size: max(250px, 32vw);
   font-weight: 900;
   -webkit-text-stroke: 2px var(--text);
