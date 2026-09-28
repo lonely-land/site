@@ -8,14 +8,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#101010",
-        "ink-soft": "#000000cc",
+        // 与 app/globals.css 的 token 一一对应
+        ink: "var(--ink)",
+        "ink-2": "var(--ink-2)",
+        "ink-3": "var(--ink-3)",
+        line: "var(--line)",
+        "text-dim": "var(--text-dim)",
       },
       fontFamily: {
-        cabinet: ['"Cabinet Grotesk Variable"', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
-        boska: ['"Boska Variable"', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
-        satoshi: ['"Satoshi Variable"', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
-        inter: ["Inter", '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
+        // 三个角色：展示标题 / 拉丁正文 / 中文
+        display: ["var(--font-boska)", '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
+        sans: ["var(--font-satoshi)", '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "SimHei", "Arial", "Helvetica", "sans-serif"],
+        cn: ["var(--font-alimama)", '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', "sans-serif"],
       },
       animation: {
         "fade-up": "fadeUp 1s ease-out forwards",

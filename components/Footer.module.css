@@ -1,8 +1,9 @@
+/* Footer：排版与颜色全部走 globals.css 的 token */
 .footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #101010;
+  background: var(--ink);
   padding: 8vh 0 0;
   width: 100vw;
   height: var(--block-height);
@@ -10,14 +11,9 @@
   position: relative;
 }
 
+/* 区块标题：字体/字号由全局 .sectionTitle 提供，这里只留定位 */
 .contact {
-  margin: 0;
-  line-height: 1.2;
-  letter-spacing: 0;
-  color: #ffffff;
-  font-family: Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(36px, 5vw, 64px);
-  font-weight: 500;
+  line-height: 1.15;
 }
 
 .frame1 {
@@ -32,32 +28,31 @@
 .frame2 {
   display: flex;
   flex-shrink: 0;
-  align-items: flex-start;
+  align-items: center;
   align-self: stretch;
-  column-gap: 16px;
+  column-gap: var(--space-4);
   text-decoration: none;
   color: inherit;
 }
 
-/* 联系方式图标：react-icons 组件默认 size="1em"，这里用固定尺寸覆盖，
-   与文字一起在大屏/移动端响应式缩放 */
+/* 图标尺寸跟随文字字号（1em），品牌标与描边图标视觉等重 */
 .contactIcon {
   flex-shrink: 0;
-  width: clamp(28px, 3vw, 48px);
-  height: clamp(28px, 3vw, 48px);
-  overflow: hidden;
+  width: 1.05em;
+  height: 1.05em;
+  color: currentColor;
 }
 
 .contactText {
   position: relative;
   flex-shrink: 0;
   margin: 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-lead);
+  font-weight: 500;
   line-height: 1.3;
   letter-spacing: 0;
-  color: #ffffff;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(16px, 2vw, 32px);
-  font-weight: 500;
+  color: var(--text);
 }
 
 /* hover 下划线动画：从左到右展开 */
@@ -68,16 +63,18 @@
   bottom: 0;
   width: 100%;
   height: 2px;
-  background: #ffffff;
+  background: var(--text);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.3s ease;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 .frame2:hover .contactText::after {
   transform: scaleX(1);
 }
 
+/* 底部 Lonely 描边大字：装饰性水印，字号单独一档，属于有意的层级对比。
+   字体用无衬线 Satoshi（保留原来的观感），呼应区块标题的展示字体但不跟随 */
 .lonely {
   position: absolute;
   bottom: 0;
@@ -86,11 +83,11 @@
   margin: 0;
   line-height: 0.85;
   letter-spacing: 0;
-  color: #101010;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-satoshi), var(--font-fallback);
   font-size: max(250px, 32vw);
   font-weight: 900;
-  -webkit-text-stroke: 2px #ffffff;
+  -webkit-text-stroke: 2px var(--text);
   paint-order: stroke fill;
   white-space: nowrap;
   pointer-events: none;
@@ -102,10 +99,6 @@
     height: var(--block-height);
     padding: 80px 24px 120px;
     justify-content: flex-start;
-  }
-
-  .contact {
-    font-size: clamp(36px, 10vw, 64px);
   }
 
   .frame1 {
@@ -122,17 +115,7 @@
 
   .frame2 {
     justify-content: center;
-    column-gap: 12px;
-  }
-
-  .contactIcon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .contactText {
-    font-size: clamp(14px, 4vw, 20px);
-    line-height: 1.4;
+    column-gap: var(--space-3);
   }
 
   /* 移动端不再向下溢出 5%，保证大字完整落在可见视口内 */
@@ -143,8 +126,8 @@
     transform: translateX(-50%);
     font-size: clamp(100px, 28vw, 180px);
     line-height: 0.85;
-    color: #101010;
-    -webkit-text-stroke: 1px #ffffff;
+    color: var(--ink);
+    -webkit-text-stroke: 1px var(--text);
     paint-order: stroke fill;
     margin: 0;
   }

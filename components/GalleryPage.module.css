@@ -1,6 +1,7 @@
+/* /gallery 页：与首页同一套 token 与排版角色 */
 .page {
   min-height: 100vh;
-  background: #101010;
+  background: var(--ink);
   padding: 80px 4vw 120px;
 }
 
@@ -8,40 +9,37 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: var(--space-5);
   margin-bottom: 72px;
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
 }
 
+/* 页面标题：与首页区块标题同一套（全局 .sectionTitle） */
 .title {
-  margin: 0;
   line-height: 1;
-  color: #ffffff;
-  font-family: "Boska Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: clamp(56px, 9vw, 132px);
-  font-weight: 900;
-  letter-spacing: -0.04em;
 }
 
 .backLink {
-  color: #666;
+  flex-shrink: 0;
+  color: var(--text-dim);
   text-decoration: none;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: 15px;
-  transition: color 0.3s ease;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-caption);
+  transition: color var(--dur-base) var(--ease-out);
   cursor: pointer;
 }
 
 .backLink:hover {
-  color: #ffffff;
+  color: var(--text);
 }
 
 /* 双列大气网格 */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: var(--space-5);
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -49,16 +47,16 @@
 @media (max-width: 768px) {
   .grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: var(--space-4);
   }
 }
 
 /* 卡片 */
 .card {
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   overflow: hidden;
-  background: #1a1a1a;
+  background: var(--ink-2);
   cursor: pointer;
   opacity: 0;
   transform: translateY(60px);
@@ -75,9 +73,9 @@
 .skeleton {
   position: absolute;
   inset: 0;
-  background: linear-gradient(110deg, #1a1a1a 30%, #252525 50%, #1a1a1a 70%);
+  background: linear-gradient(110deg, var(--ink-2) 30%, var(--ink-3) 50%, var(--ink-2) 70%);
   background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+  animation: shimmer 1.6s var(--ease-in-out) infinite;
   z-index: 1;
 }
 
@@ -93,7 +91,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity var(--dur-slow) var(--ease-out);
   z-index: 2;
 }
 
@@ -109,9 +107,9 @@
   position: absolute;
   inset: 0;
   z-index: 3;
-  background: linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%);
+  background: linear-gradient(0deg, var(--scrim-strong) 0%, transparent 50%);
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity var(--dur-base) var(--ease-out);
   pointer-events: none;
 }
 
@@ -121,17 +119,12 @@
 
 .cardName {
   position: absolute;
-  bottom: 24px;
-  left: 24px;
-  right: 24px;
-  margin: 0;
-  color: #ffffff;
-  font-family: "Satoshi Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimHei, Arial, Helvetica, sans-serif;
-  font-size: 22px;
-  font-weight: 500;
+  bottom: var(--space-5);
+  left: var(--space-5);
+  right: var(--space-5);
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
   z-index: 4;
   pointer-events: none;
 }
@@ -155,8 +148,7 @@
   }
 
   .cardName {
-    bottom: 16px;
-    left: 16px;
-    font-size: 18px;
+    bottom: var(--space-4);
+    left: var(--space-4);
   }
 }

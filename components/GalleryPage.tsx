@@ -10,6 +10,7 @@ import styles from './GalleryPage.module.css';
 import settings from '@/settings.json';
 import { type GalleryItem, imgSrc, thumbSrc, fullSrc } from '@/lib/gallery';
 import { identityRange, shuffleRange } from '@/lib/shuffle';
+import { DURATION, EASE } from '@/lib/motion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,7 +46,7 @@ function GalleryCard({
           onError={(e) => { e.currentTarget.src = imgSrc(item.file); }}
         />
         <div className={styles.cardOverlay} />
-        {item.name && <p className={styles.cardName}>{item.name}</p>}
+        {item.name && <p className={`bodyText ${styles.cardName}`}>{item.name}</p>}
       </div>
     </div>
   );
@@ -83,9 +84,9 @@ export default function GalleryPage() {
       gsap.to(`.${styles.card}`, {
         opacity: 1,
         y: 0,
-        duration: 0.9,
+        duration: DURATION.slow,
         stagger: 0.1,
-        ease: 'power3.out',
+        ease: EASE.out,
         scrollTrigger: {
           trigger: `.${styles.grid}`,
           start: 'top 85%',
@@ -123,7 +124,7 @@ export default function GalleryPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Gallery</h1>
+        <h1 className={`sectionTitle ${styles.title}`}>Gallery</h1>
         <Link href="/" className={styles.backLink}>← Back to home</Link>
       </header>
 

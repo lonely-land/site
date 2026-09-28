@@ -18,6 +18,9 @@ const BACKGROUND_IMAGE =
  * 1. 初始背景为黑色
  * 2. Title 和 Subtitle 逐词动画（模糊→清晰 + 下→上）
  * 3. 动画完成且背景图加载完成后，黑色遮罩淡出，渐变到背景图
+ *
+ * 动效说明：hero 的逐词入场（1.2 / 0.8s）与背景淡出（1.5s）是刻意放慢的
+ * 开场编排，属于通用动效 token（lib/motion.ts）之外的例外。
  */
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +114,7 @@ export default function Landing() {
       style={{ '--landing-bg': `url("${BACKGROUND_IMAGE}")` } as React.CSSProperties}
     >
       <div className={styles.bgOverlay} ref={overlayRef} />
-      <p className={styles.title} ref={titleRef}>
+      <p className={`heroTitle ${styles.title}`} ref={titleRef}>
         {TITLE_WORDS.map((word, i) => (
           <span key={i}>
             {i > 0 && ' '}
@@ -119,7 +122,7 @@ export default function Landing() {
           </span>
         ))}
       </p>
-      <p className={styles.title2} ref={subtitleRef}>
+      <p className={`lead ${styles.title2}`} ref={subtitleRef}>
         {SUBTITLE_WORDS.map((word, i) => (
           <span key={i}>
             {i > 0 && ' '}
@@ -127,7 +130,7 @@ export default function Landing() {
           </span>
         ))}
       </p>
-      <p className={styles.copyrightLonely2026}>Copyright © Lonely 2026</p>
+      <p className={`caption ${styles.copyrightLonely2026}`}>Copyright © Lonely 2026</p>
     </div>
   );
 }

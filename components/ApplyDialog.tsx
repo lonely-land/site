@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { FaGithub, FaEnvelope, FaXmark } from 'react-icons/fa6';
+import { Mail, X } from 'lucide-react';
+import BrandIcon from './BrandIcon';
 import styles from './ApplyDialog.module.css';
 
 const REPO_URL = 'https://github.com/v0id-ink/site';
@@ -34,40 +35,51 @@ export default function ApplyDialog({ open, onClose }: ApplyDialogProps) {
       aria-modal="true"
       aria-labelledby="apply-dialog-title"
     >
-      <div className={styles.scaleWrapper}>
-        <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.head}>
+          <div className={styles.headText}>
+            <h2 id="apply-dialog-title" className={styles.title}>
+              Welcome, Friends.
+            </h2>
+            <p className={`caption ${styles.subtitle}`}>
+              Choose your submission method.
+            </p>
+          </div>
+
           <button
+            type="button"
             className={styles.closeBtn}
             onClick={onClose}
             aria-label="Close"
           >
-            <FaXmark aria-hidden focusable="false" />
+            <X size={20} strokeWidth={1.75} aria-hidden focusable="false" />
           </button>
+        </div>
 
-          <h2 id="apply-dialog-title" className={styles.title}>
-            Welcome, Friends.
-          </h2>
-          <p className={styles.subtitle}>Choose your submission method.</p>
-
-          <div className={styles.buttons}>
-            <a
-              href={ISSUE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${styles.btn} ${styles.btnGithub}`}
-            >
-              <FaGithub className={styles.btnIcon} aria-hidden focusable="false" />
-              <span className={styles.btnMain}>Github</span>
-              <span className={styles.btnSub}>(recommend)</span>
-            </a>
-            <a
-              href={`mailto:${MAIL_ADDRESS}`}
-              className={`${styles.btn} ${styles.btnMail}`}
-            >
-              <FaEnvelope className={styles.btnIcon} aria-hidden focusable="false" />
-              <span className={styles.btnMain}>Mail</span>
-            </a>
-          </div>
+        <div className={styles.buttons}>
+          <a
+            href={ISSUE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.btn}
+          >
+            <BrandIcon name="github" size={20} className={styles.btnIcon} />
+            <span className={styles.btnMain}>Github</span>
+            <span className={styles.btnHint}>(recommend)</span>
+          </a>
+          <a
+            href={`mailto:${MAIL_ADDRESS}`}
+            className={styles.btn}
+          >
+            <Mail
+              size={20}
+              strokeWidth={1.75}
+              aria-hidden
+              focusable="false"
+              className={styles.btnIcon}
+            />
+            <span className={styles.btnMain}>Mail</span>
+          </a>
         </div>
       </div>
     </div>

@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FaArrowRight, FaChevronLeft, FaChevronRight, FaXmark } from 'react-icons/fa6';
+import { ArrowRight, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import styles from './Gallery.module.css';
 import settings from '@/settings.json';
 import { type GalleryItem, imgSrc, thumbSrc, fullSrc } from '@/lib/gallery';
 import { identityRange, shuffleRange } from '@/lib/shuffle';
+import { DURATION, EASE } from '@/lib/motion';
 
 /**
  * 单个 Gallery 卡片
@@ -185,8 +186,8 @@ export default function Gallery({ limit }: { limit?: number }) {
     if (!el) return;
     const underline = el.querySelector(`.${styles.linkUnderline}`) as HTMLElement | null;
     const arrow = el.querySelector(`.${styles.arrowRight}`) as HTMLElement | null;
-    if (underline) gsap.to(underline, { scaleX: 1, duration: 0.4, ease: 'power2.out' });
-    if (arrow) gsap.to(arrow, { x: 8, duration: 0.4, ease: 'power2.out' });
+    if (underline) gsap.to(underline, { scaleX: 1, duration: DURATION.base, ease: EASE.out });
+    if (arrow) gsap.to(arrow, { x: 8, duration: DURATION.base, ease: EASE.out });
   }, []);
 
   const handleLinkLeave = useCallback(() => {
@@ -194,8 +195,8 @@ export default function Gallery({ limit }: { limit?: number }) {
     if (!el) return;
     const underline = el.querySelector(`.${styles.linkUnderline}`) as HTMLElement | null;
     const arrow = el.querySelector(`.${styles.arrowRight}`) as HTMLElement | null;
-    if (underline) gsap.to(underline, { scaleX: 0, duration: 0.3, ease: 'power2.in', transformOrigin: 'right center' });
-    if (arrow) gsap.to(arrow, { x: 0, duration: 0.3, ease: 'power2.in' });
+    if (underline) gsap.to(underline, { scaleX: 0, duration: DURATION.fast, ease: EASE.in, transformOrigin: 'right center' });
+    if (arrow) gsap.to(arrow, { x: 0, duration: DURATION.fast, ease: EASE.in });
   }, []);
 
   // 键盘事件：ESC 关闭，左右箭头切换
@@ -235,7 +236,7 @@ export default function Gallery({ limit }: { limit?: number }) {
 
   return (
     <div className={styles.gallery2}>
-      <p className={styles.gallery}>Gallery</p>
+      <h2 className={`sectionTitle ${styles.gallery}`}>Gallery</h2>
       <div ref={scrollRef} className={styles.autoWrapper} data-slot-gallery
         onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
         {items.map(({ key, item }, index) => (
@@ -255,7 +256,7 @@ export default function Gallery({ limit }: { limit?: number }) {
               Go to gallery
               <span className={styles.linkUnderline} />
             </span>
-            <FaArrowRight className={styles.arrowRight} aria-hidden focusable="false" />
+            <ArrowRight className={styles.arrowRight} strokeWidth={2} aria-hidden focusable="false" />
           </Link>
         </div>
       )}
@@ -269,7 +270,7 @@ export default function Gallery({ limit }: { limit?: number }) {
             onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
             aria-label="关闭"
           >
-            <FaXmark aria-hidden focusable="false" />
+            <X strokeWidth={2} aria-hidden focusable="false" />
           </button>
 
           {items.length > 1 && (
@@ -279,14 +280,14 @@ export default function Gallery({ limit }: { limit?: number }) {
                 onClick={(e) => { e.stopPropagation(); goToPrev(); }}
                 aria-label="上一张"
               >
-                <FaChevronLeft aria-hidden focusable="false" />
+                <ChevronLeft strokeWidth={2} aria-hidden focusable="false" />
               </button>
               <button
                 className={`${styles.lightboxNav} ${styles.lightboxNext}`}
                 onClick={(e) => { e.stopPropagation(); goToNext(); }}
                 aria-label="下一张"
               >
-                <FaChevronRight aria-hidden focusable="false" />
+                <ChevronRight strokeWidth={2} aria-hidden focusable="false" />
               </button>
             </>
           )}

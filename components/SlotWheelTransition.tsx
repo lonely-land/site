@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
+import { DURATION } from '@/lib/motion';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
@@ -17,6 +18,9 @@ interface SlotWheelTransitionProps {
  * - 过冲回弹（0.18s）：目标 Block 轻微过冲后回弹，模拟拨码轮惯性
  *
  * 触发：wheel / touch / keyboard，scroll-snap 锁定每个 Block
+ *
+ * 动效说明：这里的 0.08 / 0.1 / 0.18s 是刻意为之的"机械感"编排
+ * （蓄力→释放→过冲回弹），不走通用 token；与 token 等值的 0.4s 用 DURATION.base。
  */
 export default function SlotWheelTransition({ children }: SlotWheelTransitionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +87,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 释放段（0.4s）：当前 Block 加速翻出
       tl.to(currentSection, {
         yPercent: -100,
-        duration: 0.4,
+        duration: DURATION.base,
         ease: 'power2.in',
       });
       // 目标 Block 从下方快速滚入（power3.out 起步快，不会出现空档黑屏）
@@ -94,7 +98,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
         {
           y: 0,
           yPercent: 0,
-          duration: 0.4,
+          duration: DURATION.base,
           ease: 'power3.out',
         },
         0.1,
@@ -119,7 +123,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       });
       tl.to(currentSection, {
         yPercent: 100,
-        duration: 0.4,
+        duration: DURATION.base,
         ease: 'power2.in',
       });
       tl.fromTo(
@@ -128,7 +132,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
         {
           y: 0,
           yPercent: 0,
-          duration: 0.4,
+          duration: DURATION.base,
           ease: 'power3.out',
         },
         0.1,

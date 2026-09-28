@@ -1,12 +1,34 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
-  variable: "--font-inter",
+/**
+ * 字体全部自托管（fonts/），不再依赖 Fontshare / Google Fonts：
+ * - 之前 <link> 引入的 Fontshare family 名是 'Satoshi' / 'Boska'，而 CSS 里写的是
+ *   "Satoshi Variable" / "Boska Variable"，名字对不上 → 文件从未被下载，
+ *   全站拉丁文字实际一直在走 PingFang / Arial 回退（线上实测 0 个 face）
+ * - 自托管顺带解决中文访客访问 Google Fonts 不稳定的问题，也省掉 2 个阻塞请求
+ * 字体角色：Boska = 展示标题，Satoshi = 拉丁正文，Alimama = 中文
+ * （Fontshare / ITF 免费字体许可允许自托管）
+ */
+const boska = localFont({
+  src: [
+    { path: "../fonts/Boska-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/Boska-700.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/Boska-900.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-boska",
+  display: "swap",
+});
+
+const satoshi = localFont({
+  src: [
+    { path: "../fonts/Satoshi-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/Satoshi-500.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/Satoshi-700.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/Satoshi-900.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-satoshi",
   display: "swap",
 });
 
@@ -34,27 +56,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className={`${inter.variable} ${alimama.variable}`}>
+    <html lang="zh-CN" className={`${boska.variable} ${satoshi.variable} ${alimama.variable}`}>
       <head>
-        {/* Fontshare: Cabinet Grotesk / Boska / Satoshi 变量字体 */}
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,700,800,900&f[]=boska@400,700,900&f[]=satoshi@400,500,700,900&display=swap"
-          rel="stylesheet"
-        />
-        {/* Google Fonts: Friends 版块字体 */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Intel+One+Mono:wght@400;500&family=Inclusive+Sans&family=Winky+Rough:wght@600&family=Baloo+Da+2:wght@500&family=Outfit:wght@300;400&display=swap"
-          rel="stylesheet"
-        />
         {/* PWA */}
         <meta name="theme-color" content="#101010" />
         {/* 站点图标：Lonely 角色插画（深色底 #101010，与 theme-color 一致） */}
         <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body className="bg-ink text-white font-inter antialiased">
+      <body className="bg-ink text-white antialiased">
         {children}
       </body>
     </html>

@@ -2,9 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   设计 token
+   全站只允许用这里的变量：颜色、字号、圆角、间距、动效。
+   组件里不要再出现散装的 #hex / rgba / 魔法数字字号。
+   ------------------------------------------------------------------ */
 :root {
-  --color-ink: #101010;
-  --color-ink-soft: #000000cc;
+  /* 色板 */
+  --ink: #101010;                          /* 页面底色 */
+  --ink-2: #1a1a1a;                        /* 面板 / 卡片底 */
+  --ink-3: #262626;                        /* hover 提升 */
+  --line: rgba(255, 255, 255, 0.1);        /* 描边 */
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.62);
+  --text-mute: rgba(255, 255, 255, 0.34);
+  --scrim: rgba(0, 0, 0, 0.45);            /* 卡片压暗 */
+  --scrim-card: rgba(0, 0, 0, 0.86);       /* 堆叠里非当前卡片 */
+  --scrim-strong: rgba(0, 0, 0, 0.82);     /* 遮罩 / 弹窗背景 */
+  --surface-1: rgba(255, 255, 255, 0.06);  /* 安静控件底（按钮 / 图标按钮） */
+  --surface-2: rgba(255, 255, 255, 0.12);  /* 控件 hover */
+
+  /* 字体角色：display=展示标题，sans=拉丁正文，cn=中文回退 */
+  --font-fallback: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "SimHei", Arial, Helvetica, sans-serif;
+
+  /* 字号 scale */
+  --fs-hero: clamp(44px, 7.4vw, 104px);
+  --fs-title: clamp(36px, 5.2vw, 68px);
+  --fs-h2: clamp(20px, 2.4vw, 34px);
+  --fs-lead: clamp(16px, 1.7vw, 24px);
+  --fs-body: clamp(15px, 1.5vw, 20px);
+  --fs-caption: clamp(12px, 1.1vw, 14px);
+
+  /* 控件 */
+  --control-h: 56px;                       /* 按钮 / 输入控件统一高度 */
+  --focus-ring: 2px solid var(--text);     /* 键盘焦点环 */
+
+  /* 阴影 */
+  --shadow-1: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.55);
+
+  /* 圆角：卡片 / 图片 / 小控件 / 胶囊 */
+  --radius-card: 12px;
+  --radius-media: 12px;
+  --radius-chip: 8px;
+  --radius-pill: 999px;
+
+  /* 间距 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* 动效 */
+  --dur-fast: 0.2s;
+  --dur-base: 0.4s;
+  --dur-slow: 0.9s;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* 每个 Block（Landing / Gallery / Friends / Footer）的高度。
      移动端浏览器地址栏会占掉一部分高度：100vh 取的是「工具栏收起」的大视口，
@@ -24,6 +83,62 @@
   box-sizing: border-box;
 }
 
+/* ------------------------------------------------------------------
+   排版 utilities（全局类，不属于任何 CSS Module）
+   ------------------------------------------------------------------ */
+
+/* 区块标题：Gallery / Friends / Contact 等统一用它 */
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-title);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+/* Landing hero：同一展示字体，只用更大的 scale */
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-hero);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+/* 副标题 / 引导语 */
+.lead {
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-lead);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* 正文 / 卡片文字 */
+.bodyText {
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* 小字 / 说明 */
+.caption {
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
 /* 屏幕外 section 跳过渲染，降低 GPU/CPU 开销 */
 .skipWhenOffscreen {
   content-visibility: auto;
@@ -34,16 +149,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--color-ink);
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
 
 ::selection {
-  background: #ffffff;
-  color: #101010;
+  background: var(--text);
+  color: var(--ink);
 }
 
 /* 自定义滚动条 */
@@ -52,14 +167,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #101010;
+  background: var(--ink);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
-  border-radius: 4px;
+  background: var(--ink-3);
+  border-radius: var(--radius-chip);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3a;
+  background: var(--line);
 }
