@@ -335,11 +335,12 @@
     scroll-padding-left: 20px;
   }
 
-  /* 78vw + 4:3：露出下一张，横向照片也不会被裁成竖图 */
+  /* 84vw + 4:5：单屏只放一张时，图片要有足够体量把整块撑起来（4:3 会显得又扁又小，
+     上下空一大截）；右侧仍露出约 13vw 的下一张，提示可以横向滑 */
   .galleryItem {
-    width: 78vw;
+    width: 84vw;
     height: auto;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
   }
 
   .withName {
