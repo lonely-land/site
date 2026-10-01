@@ -8,17 +8,17 @@ import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
 
 /**
- * About：左边人设卡 + 右边分页器（3 页：喜欢的歌手？/ 追什么番剧？/ 玩什么游戏？）
+ * About：分页器（3 页：Music / Anime / Games）
  *
- * 版式来自 Figma「Profile」文件（frame 1:2 / 1:50 / 1:71），量到的关键值：
- * - 页面标题 64px/700 在 (41,46)，圆点在右缘垂直居中（849 宽的 frame 里 x=808）
- * - 番剧行 738×232：缩略图 148×198 在 (13,17)，标题 36/700 在 (194,27)，简介 20/500 在 (194,84)
- * - 游戏行 738×166：图标 105×105 在 (33,31)，文字块在 x=160
- * - 行底图统一压 85% 黑（这里用 --scrim-card，值就是 0.86）
+ * 结构对齐站点现有区块（Gallery / Friends）：
+ * - 不套面板底色：内容是直接铺在页面底色上的，卡片感由条目自己提供
+ * - 标题走全局 .sectionTitle（Boska / --fs-title），与 Gallery 同一个源
+ * - 头部一行：标题在左、分页圆点在右（同 GalleryPage 的 header 排法）
+ * - 版式比例取自 Figma「Profile」：歌手方格 4 列、番剧行缩略图 148×198、
+ *   游戏行图标 105×105、行底图统一 85% 压暗（--scrim-card 0.86）
  *
- * 与拨码轮共处：
- * - 页内容能滚 → 自己吃掉滚轮（到边缘才把事件放回去）
- * - 到边缘后又分两种：还有下一页 → 翻页；已经是末页/首页 → 放行给 SlotWheelTransition 翻屏
+ * 与拨码轮共处：页内容能滚就自己滚，到边缘且还有上/下一页才翻页，
+ * 首尾页边缘放行给 SlotWheelTransition 翻屏。
  */
 
 type AboutItem = {
@@ -33,25 +33,20 @@ type AboutItem = {
 
 type AboutPage = {
   id?: string;
-  /** 英文名，仅作数据留存；界面按设计稿用 question 做大标题 */
+  /** 页面大标题：一个英文单词 */
   title?: string;
-  question: string;
+  /** 中文问句（保留在数据里，界面不再显示） */
+  question?: string;
   /** grid = 方形封面网格，list = 「底图 + 缩略图 + 标题简介」的横条 */
   layout?: 'grid' | 'list';
   items?: AboutItem[];
 };
 
 type AboutData = {
-  name?: string;
-  meta?: string[];
-  avatar?: string;
-  tagline?: string;
   pages?: AboutPage[];
 };
 
 const ABOUT: AboutData = (settings as unknown as { about?: AboutData }).about ?? {};
-const NAME = ABOUT.name || 'Lonely';
-const META = ABOUT.meta ?? [];
 const PAGES = (ABOUT.pages ?? []).filter((p) => (p.items ?? []).length > 0);
 
 /** 图片缺失时退化成首字母占位（中文取首字，拉丁取首字母大写） */
@@ -93,30 +88,11 @@ function Thumb({ item, className }: { item: AboutItem; className?: string }) {
   );
 }
 
-/** 横条：底图 + 压暗 + 缩略图 + 标题/简介 */
-function ListRow({ item }: { item: AboutItem }) {
-  return (
-    <li className={styles.row}>
-      {item.bg ? (
-        <img className={styles.rowBg} src={item.bg} alt="" loading="lazy" decoding="async" />
-      ) : null}
-      <span className={styles.rowScrim} aria-hidden />
-      {item.url ? <RowLink item={item} /> : null}
-      <Thumb item={item} className={styles.rowThumb} />
-      <div className={styles.rowText}>
-        <p className={styles.rowTitle}>{item.title}</p>
-        {item.desc ? <p className={styles.rowDesc}>{item.desc}</p> : null}
-      </div>
-    </li>
-  );
-}
-
-/** 方形封面 + 名字 */
 /** 整块热区的外链：铺满父容器，标题即链接名，右上角一个箭头作为可点提示 */
-function RowLink({ item }: { item: AboutItem }) {
+function ItemLink({ item }: { item: AboutItem }) {
   return (
     <a
-      className={styles.rowLink}
+      className={styles.itemLink}
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
@@ -127,10 +103,27 @@ function RowLink({ item }: { item: AboutItem }) {
   );
 }
 
+function ListRow({ item }: { item: AboutItem }) {
+  return (
+    <li className={styles.row}>
+      {item.bg ? (
+        <img className={styles.rowBg} src={item.bg} alt="" loading="lazy" decoding="async" />
+      ) : null}
+      <span className={styles.rowScrim} aria-hidden />
+      {item.url ? <ItemLink item={item} /> : null}
+      <Thumb item={item} className={styles.rowThumb} />
+      <div className={styles.rowText}>
+        <p className={styles.rowTitle}>{item.title}</p>
+        {item.desc ? <p className={styles.rowDesc}>{item.desc}</p> : null}
+      </div>
+    </li>
+  );
+}
+
 function GridTile({ item }: { item: AboutItem }) {
   return (
     <li className={styles.tile}>
-      {item.url ? <RowLink item={item} /> : null}
+      {item.url ? <ItemLink item={item} /> : null}
       <Thumb item={item} />
       <p className={styles.tileName}>{item.title}</p>
     </li>
@@ -145,22 +138,13 @@ export default function About() {
   const busyRef = useRef(false);
   const playedRef = useRef(false);
   const [index, setIndex] = useState(0);
-  const [avatarBroken, setAvatarBroken] = useState(false);
-  const [avatarLoaded, setAvatarLoaded] = useState(false);
-  const avatarRef = useRef<HTMLImageElement>(null);
-
-  // 水合竞态：头像可能在 React 挂上 onLoad 之前就已加载完成（同 Gallery）
-  useEffect(() => {
-    if (avatarRef.current?.complete && avatarRef.current.naturalWidth > 0) setAvatarLoaded(true);
-  }, []);
 
   const page = PAGES[index];
   const total = PAGES.length;
   const reducedMotion = () =>
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 先让当前页退场，退完再换页 —— 换完由下面的 effect 编排新页入场，
-  // 避免"内容凭空消失再整体淡入"这种两段都对不上的观感
+  // 先让当前页退场，退完再换页；换完由下面的 effect 编排新页入场
   const goTo = useCallback(
     (next: number) => {
       if (next < 0 || next >= total) return;
@@ -192,16 +176,16 @@ export default function About() {
     [total],
   );
 
-  // 入场：拨码轮把这一屏翻上来（进入视口 20%）时才播，编排同 Landing 的思路：
-  // 面板先起、标题失焦转清晰、条目最后逐条落位
+  // 入场：拨码轮把这一屏翻上来（进入视口 20%）时才播
+  // 编排：标题失焦转清晰 → 分页点淡入 → 条目逐条落位
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root || reducedMotion()) return;
-    const panels = root.querySelectorAll(`.${styles.panel}`);
     const title = root.querySelector(`.${styles.pageTitle}`);
+    const dots = root.querySelector(`.${styles.dots}`);
     const items = root.querySelectorAll('[data-page] li');
-    if (panels.length) gsap.set(panels, { opacity: 0, y: 26 });
     if (title) gsap.set(title, { opacity: 0, filter: 'blur(12px)', y: 18 });
+    if (dots) gsap.set(dots, { opacity: 0 });
     if (items.length) gsap.set(items, { opacity: 0, y: 18 });
   }, []);
 
@@ -215,18 +199,11 @@ export default function About() {
           if (!entry.isIntersecting || playedRef.current) return;
           playedRef.current = true;
 
-          const panels = root.querySelectorAll(`.${styles.panel}`);
           const title = root.querySelector(`.${styles.pageTitle}`);
+          const dots = root.querySelector(`.${styles.dots}`);
           const items = root.querySelectorAll('[data-page] li');
 
           const tl = gsap.timeline();
-          if (panels.length) {
-            tl.fromTo(
-              panels,
-              { opacity: 0, y: 26 },
-              { opacity: 1, y: 0, duration: 0.7, ease: EASE.out, stagger: 0.1, clearProps: 'transform' },
-            );
-          }
           if (title) {
             tl.fromTo(
               title,
@@ -239,15 +216,15 @@ export default function About() {
                 ease: EASE.out,
                 clearProps: 'filter,transform',
               },
-              0.06,
             );
           }
+          if (dots) tl.fromTo(dots, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: EASE.out }, 0.1);
           if (items.length) {
             tl.fromTo(
               items,
               { opacity: 0, y: 18 },
               { opacity: 1, y: 0, duration: 0.55, ease: EASE.out, stagger: 0.045, clearProps: 'transform' },
-              0.26,
+              0.18,
             );
           }
           io.disconnect();
@@ -365,78 +342,47 @@ export default function About() {
   };
 
   if (!PAGES.length) return null;
-  const showAvatar = Boolean(ABOUT.avatar) && !avatarBroken;
 
   return (
     <div className={styles.about} ref={rootRef} data-about>
       <h2 className={styles.srOnly}>About</h2>
 
-      <div className={styles.layout}>
-        <section className={`${styles.panel} ${styles.profile}`} aria-label="个人简介">
-          <div className={styles.avatar}>
-            {showAvatar ? (
-              <img
-                ref={avatarRef}
-                className={`${styles.avatarImg} ${avatarLoaded ? styles.avatarImgLoaded : ''}`}
-                src={ABOUT.avatar}
-                alt=""
-                decoding="async"
-                onLoad={() => setAvatarLoaded(true)}
-                onError={() => setAvatarBroken(true)}
-              />
-            ) : (
-              <span className={styles.avatarInitial} aria-hidden>
-                {initial(NAME)}
-              </span>
-            )}
-          </div>
+      <div className={styles.head} data-pager>
+        <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.title || page.question}</h3>
+        <div className={styles.dots} role="group" aria-label="分页">
+          {PAGES.map((p, i) => (
+            <button
+              key={p.id ?? i}
+              type="button"
+              className={`${styles.dot} ${i === index ? styles.dotActive : ''}`}
+              aria-label={`第 ${i + 1} 页，共 ${total} 页：${p.title || p.question}`}
+              aria-current={i === index ? 'true' : undefined}
+              onClick={() => goTo(i)}
+            />
+          ))}
+        </div>
+      </div>
 
-          <div className={styles.profileText}>
-            <p className={styles.name}>{NAME}</p>
-            {META.length > 0 ? <p className={`caption ${styles.meta}`}>{META.join(' · ')}</p> : null}
-            {ABOUT.tagline ? <p className={`caption ${styles.tagline}`}>{ABOUT.tagline}</p> : null}
-          </div>
-        </section>
-
-        <section
-          className={`${styles.panel} ${styles.pager}`}
-          aria-label={page.question}
-          data-pager
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-        >
-          <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.title || page.question}</h3>
-
-          <div className={styles.pageBody} ref={bodyRef} data-page={page.id} tabIndex={0}>
-            {page.layout === 'grid' ? (
-              <ul className={styles.tiles} data-layout="grid">
-                {page.items?.map((item, i) => (
-                  <GridTile key={i} item={item} />
-                ))}
-              </ul>
-            ) : (
-              <ul className={styles.rows} data-layout="list">
-                {page.items?.map((item, i) => (
-                  <ListRow key={i} item={item} />
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* 设计稿里是右侧垂直居中的一列圆点 */}
-          <div className={styles.dots} role="group" aria-label="分页">
-            {PAGES.map((p, i) => (
-              <button
-                key={p.id ?? i}
-                type="button"
-                className={`${styles.dot} ${i === index ? styles.dotActive : ''}`}
-                aria-label={`第 ${i + 1} 页，共 ${total} 页：${p.question}`}
-                aria-current={i === index ? 'true' : undefined}
-                onClick={() => goTo(i)}
-              />
+      <div
+        className={styles.pageBody}
+        ref={bodyRef}
+        data-page={page.id}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+      >
+        {page.layout === 'grid' ? (
+          <ul className={styles.tiles} data-layout="grid">
+            {page.items?.map((item, i) => (
+              <GridTile key={i} item={item} />
             ))}
-          </div>
-        </section>
+          </ul>
+        ) : (
+          <ul className={styles.rows} data-layout="list">
+            {page.items?.map((item, i) => (
+              <ListRow key={i} item={item} />
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

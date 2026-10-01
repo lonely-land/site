@@ -1,51 +1,25 @@
-/* About（人设卡 + 3 页分页器）
+/* About：分页器（Music / Anime / Games）
 
-   设计语言对齐（与 Gallery / Friends / Footer 保持一致）：
-   - 页标题直接套全局 .sectionTitle（Boska 400 / --fs-title），模块里只留位置
-   - 卡片语言 = --ink-2 + --line + --radius-card + --shadow-1（同 ApplyDialog / Friends）
-   - 图片一律「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
-   - 正文/说明用 --fs-body + --text-dim（同 Friends 的 cardDesc）
-   - 所有过渡走 --dur-* / --ease-*
+   设计语言对齐站点现有区块：
+   - 不套面板底色（同 Gallery），卡片感由条目自己提供
+   - 标题走全局 .sectionTitle，头部一行「标题在左、分页点在右」（同 GalleryPage header）
+   - 排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token
+   - 图片统一「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
 
-   版式比例对齐 Figma「Profile」文件量到的值（849 宽的 frame：标题 (41,46)、
-   圆点右缘垂直居中、番剧行 738×232 缩略图 148×198、游戏行 738×166 图标 105×105）。 */
+   版式比例取自 Figma「Profile」：歌手方格 4 列、番剧行缩略图 148×198、
+   游戏行图标 105×105、行底图统一 85% 压暗（--scrim-card 0.86）。 */
 
 .about {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: var(--block-height);
-  padding: 5vh 4vw;
+  padding: 3vh 4vw 4vh;
   background: var(--ink);
   overflow: hidden;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(230px, 0.78fr) minmax(0, 2.2fr);
-  gap: var(--space-4);
-  height: 100%;
-  min-height: 0;
-  /* 内容比一屏矮时整排垂直居中，别让两张卡片各自拖着半屏空白 */
-  align-content: center;
-}
-
-.panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: auto;
-  max-height: 100%;
-  padding: var(--space-4);
-  background: var(--ink-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-}
-
-/* 只给读屏用的区块名（可见大标题是当前页的问题） */
+/* 只给读屏用的区块名 */
 .srOnly {
   position: absolute;
   width: 1px;
@@ -59,93 +33,67 @@
   border: 0;
 }
 
-/* ---- 人设卡 ---- */
-/* 卡片整列垂直居中：头像是方图，否则文字下方会留一大片空 */
-.profile {
-  justify-content: center;
-}
-
-.avatar {
-  position: relative;
-  flex: 0 0 auto;
-  width: 100%;
-  aspect-ratio: 1 / 1;
+/* ---- 头部：标题在左，分页点在右 ---- */
+.head {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-media);
-  overflow: hidden;
-  background: var(--ink-3);
-}
-
-.avatarImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease-out);
-}
-
-.avatarImgLoaded {
-  opacity: 1;
-}
-
-.avatarInitial {
-  font-family: var(--font-boska), var(--font-fallback);
-  font-size: var(--fs-title);
-  line-height: 1;
-  color: var(--text-mute);
-}
-
-.profileText {
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
   flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-top: var(--space-4);
-  min-width: 0;
-}
-
-.name {
-  margin: 0;
-  font-family: var(--font-boska), var(--font-fallback);
-  font-weight: 400;
-  font-size: var(--fs-h2);
-  line-height: 1.1;
-  color: var(--text);
-}
-
-.meta,
-.tagline {
-  margin: 0;
-}
-
-.meta {
-  color: var(--text-dim);
-}
-
-.tagline {
-  color: var(--text-mute);
-}
-
-/* ---- 分页器 ---- */
-.pager {
-  padding: clamp(18px, 3.2vw, 46px);
+  margin-bottom: 4vh;
 }
 
 /* 字体字号全部来自全局 .sectionTitle（与 Gallery / Friends 同一个源） */
 .pageTitle {
-  margin: 0 0 clamp(12px, 1.6vw, 24px);
-  flex: 0 0 auto;
+  margin: 0;
 }
 
-/* 页内容：能滚就自己滚（滚轮归属见 About.tsx） */
+.dots {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-1);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  width: clamp(10px, 1vw, 14px);
+  height: clamp(10px, 1vw, 14px);
+  border-radius: var(--radius-pill);
+  background: var(--text-mute);
+  transition: background var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.dot:hover::before {
+  background: var(--text-dim);
+}
+
+.dotActive::before {
+  background: var(--text);
+  transform: scale(1.15);
+}
+
+.dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---- 页内容：能滚就自己滚（滚轮归属见 About.tsx） ---- */
 .pageBody {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  padding-right: var(--space-5);
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -158,10 +106,9 @@
   display: none;
 }
 
-.pageBody:focus-visible,
-.pager:focus-visible {
+.pageBody:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 4px;
+  outline-offset: 6px;
   border-radius: var(--radius-media);
 }
 
@@ -219,12 +166,56 @@
   user-select: none;
 }
 
+/* ---- 外链热区：铺满条目，箭头只在 hover / 聚焦时出现 ---- */
+.itemLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: var(--space-3);
+  text-decoration: none;
+}
+
+.tile .itemLink {
+  padding: var(--space-2);
+}
+
+.itemLink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-card);
+}
+
+.tile .itemLink:focus-visible {
+  border-radius: var(--radius-media);
+}
+
+.linkIcon {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--scrim);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.row:hover .linkIcon,
+.tile:hover .linkIcon,
+.itemLink:focus-visible .linkIcon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ---- 歌手：方形封面网格（设计稿 4 列、卡片间隔 47） ---- */
 .tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(18px, 3.3vw, 47px) clamp(14px, 3.3vw, 47px);
-  max-width: 800px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -253,51 +244,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* ---- 外链热区：铺满条目，箭头只在 hover / 聚焦时出现 ---- */
-.rowLink {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: var(--space-3);
-  text-decoration: none;
-}
-
-.tile .rowLink {
-  padding: var(--space-2);
-}
-
-.rowLink:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: -4px;
-  border-radius: var(--radius-card);
-}
-
-.tile .rowLink:focus-visible {
-  border-radius: var(--radius-media);
-}
-
-.linkIcon {
-  width: 30px;
-  height: 30px;
-  padding: 6px;
-  border-radius: var(--radius-pill);
-  background: var(--scrim);
-  color: var(--text);
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
-}
-
-.row:hover .linkIcon,
-.tile:hover .linkIcon,
-.rowLink:focus-visible .linkIcon {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* ---- 番剧 / 游戏：底图横条 ---- */
@@ -362,6 +308,8 @@
   position: relative;
   z-index: 1;
   min-width: 0;
+  /* 行是整屏宽的，正文限一下行宽，别拉成一整行 */
+  max-width: 68ch;
   padding-top: clamp(2px, 0.7vw, 10px);
 }
 
@@ -393,7 +341,7 @@
 }
 
 [data-page='games'] .rowThumb {
-  width: clamp(64px, 7.3vw, 105px);
+  width: clamp(64px, 7.3vw, 132px);
   aspect-ratio: 1 / 1;
 }
 
@@ -401,105 +349,19 @@
   padding-top: 0;
 }
 
-/* ---- 分页圆点：设计稿在右缘垂直居中 ---- */
-.dots {
-  position: absolute;
-  top: 50%;
-  right: clamp(8px, 1.9vw, 27px);
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.dot {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.dot::before {
-  content: '';
-  width: clamp(10px, 1vw, 14px);
-  height: clamp(10px, 1vw, 14px);
-  border-radius: var(--radius-pill);
-  background: var(--text-mute);
-  transition: background var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
-}
-
-.dot:hover::before {
-  background: var(--text-dim);
-}
-
-.dotActive::before {
-  background: var(--text);
-  transform: scale(1.15);
-}
-
-.dot:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: -4px;
-  border-radius: var(--radius-pill);
-}
-
-/* ---- 窄屏：人设卡压扁到顶部，圆点移到右上角 ---- */
+/* ---- 窄屏 ---- */
 @media (max-width: 1023px) {
   .about {
     padding: 4vh 5vw;
   }
 
-  .layout {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+  .head {
+    margin-bottom: var(--space-4);
   }
 
-  .profile {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-3);
-  }
-
-  .avatar {
-    width: 64px;
-    aspect-ratio: 1 / 1;
-  }
-
-  .profileText {
-    margin-top: 0;
-  }
-
-  .pager {
-    flex: 1 1 0;
-    padding: var(--space-4);
-  }
-
-  /* 给右上角那排圆点让位（纯布局，字号仍由 .sectionTitle 决定） */
-  .pageTitle {
-    padding-right: calc(3 * 24px + var(--space-2));
-    margin-bottom: var(--space-3);
-  }
-
-  .pageBody {
-    padding-right: 0;
-  }
-
-  .dots {
-    top: var(--space-4);
-    right: var(--space-4);
-    transform: none;
-    flex-direction: row;
-    gap: var(--space-1);
-  }
-
+  /* 2 列：8 张正好 4 行铺满一屏，3 列会剩 300px 空白 */
   .tiles {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
   }
 
@@ -528,25 +390,19 @@
   }
 }
 
-/* ---- 矮视口：留白收一收，把高度让给内容 ---- */
+/* ---- 矮视口：留白收一收 ---- */
 @media (max-height: 700px) {
   .about {
     padding: 3vh 4vw;
   }
 
-  .panel,
-  .pager {
-    padding: var(--space-3);
-  }
-
-  .pageTitle {
-    margin-bottom: var(--space-2);
+  .head {
+    margin-bottom: var(--space-3);
   }
 }
 
 /* ---- 无障碍：跟随系统关闭动效 ---- */
 @media (prefers-reduced-motion: reduce) {
-  .avatarImg,
   .thumbImg,
   .rowBg,
   .dot::before {
