@@ -58,17 +58,27 @@ function initial(text: string): string {
 
 function Thumb({ item, className }: { item: AboutItem; className?: string }) {
   const [broken, setBroken] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const showImage = Boolean(item.image) && !broken;
+
+  // 水合竞态：图片可能在 React 挂上 onLoad 之前就已加载完成（同 Gallery）
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) setLoaded(true);
+  }, []);
 
   return (
     <div className={`${styles.thumb} ${className ?? ''}`}>
+      {showImage && !loaded ? <span className={styles.skeleton} aria-hidden /> : null}
       {showImage ? (
         <img
-          className={styles.thumbImg}
+          ref={imgRef}
+          className={`${styles.thumbImg} ${loaded ? styles.thumbImgLoaded : ''}`}
           src={item.image}
           alt=""
           loading="lazy"
           decoding="async"
+          onLoad={() => setLoaded(true)}
           onError={() => setBroken(true)}
         />
       ) : (
@@ -112,52 +122,114 @@ export default function About() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const indexRef = useRef(0);
   const lockRef = useRef(0);
+  const busyRef = useRef(false);
   const playedRef = useRef(false);
   const [index, setIndex] = useState(0);
   const [avatarBroken, setAvatarBroken] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const avatarRef = useRef<HTMLImageElement>(null);
+
+  // 水合竞态：头像可能在 React 挂上 onLoad 之前就已加载完成（同 Gallery）
+  useEffect(() => {
+    if (avatarRef.current?.complete && avatarRef.current.naturalWidth > 0) setAvatarLoaded(true);
+  }, []);
 
   const page = PAGES[index];
   const total = PAGES.length;
-  indexRef.current = index;
+  const reducedMotion = () =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // 先让当前页退场，退完再换页 —— 换完由下面的 effect 编排新页入场，
+  // 避免"内容凭空消失再整体淡入"这种两段都对不上的观感
   const goTo = useCallback(
     (next: number) => {
       if (next < 0 || next >= total) return;
       if (next === indexRef.current) return;
-      indexRef.current = next;
-      setIndex(next);
+
+      const commit = () => {
+        busyRef.current = false;
+        indexRef.current = next;
+        setIndex(next);
+      };
+
+      if (busyRef.current) return;
+      const body = bodyRef.current;
+      if (!body || reducedMotion()) {
+        commit();
+        return;
+      }
+
+      busyRef.current = true;
+      gsap.to(body, {
+        opacity: 0,
+        y: -12,
+        duration: 0.16,
+        ease: EASE.in,
+        overwrite: true,
+        onComplete: commit,
+      });
     },
     [total],
   );
 
-  // 入场：拨码轮把这一屏翻上来（进入视口 20%）时才播
+  // 入场：拨码轮把这一屏翻上来（进入视口 20%）时才播，编排同 Landing 的思路：
+  // 面板先起、标题失焦转清晰、条目最后逐条落位
   useLayoutEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!root || reducedMotion()) return;
     const panels = root.querySelectorAll(`.${styles.panel}`);
-    if (!panels.length) return;
-    gsap.set(panels, { opacity: 0, y: 28 });
+    const title = root.querySelector(`.${styles.pageTitle}`);
+    const items = root.querySelectorAll('[data-page] li');
+    if (panels.length) gsap.set(panels, { opacity: 0, y: 26 });
+    if (title) gsap.set(title, { opacity: 0, filter: 'blur(12px)', y: 18 });
+    if (items.length) gsap.set(items, { opacity: 0, y: 18 });
   }, []);
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!root || reducedMotion()) return;
 
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting || playedRef.current) return;
           playedRef.current = true;
-          gsap.to(root.querySelectorAll(`.${styles.panel}`), {
-            opacity: 1,
-            y: 0,
-            duration: DURATION.slow,
-            ease: EASE.out,
-            stagger: 0.08,
-            clearProps: 'transform',
-          });
+
+          const panels = root.querySelectorAll(`.${styles.panel}`);
+          const title = root.querySelector(`.${styles.pageTitle}`);
+          const items = root.querySelectorAll('[data-page] li');
+
+          const tl = gsap.timeline();
+          if (panels.length) {
+            tl.fromTo(
+              panels,
+              { opacity: 0, y: 26 },
+              { opacity: 1, y: 0, duration: 0.7, ease: EASE.out, stagger: 0.1, clearProps: 'transform' },
+            );
+          }
+          if (title) {
+            tl.fromTo(
+              title,
+              { opacity: 0, filter: 'blur(12px)', y: 18 },
+              {
+                opacity: 1,
+                filter: 'blur(0px)',
+                y: 0,
+                duration: 0.8,
+                ease: EASE.out,
+                clearProps: 'filter,transform',
+              },
+              0.06,
+            );
+          }
+          if (items.length) {
+            tl.fromTo(
+              items,
+              { opacity: 0, y: 18 },
+              { opacity: 1, y: 0, duration: 0.55, ease: EASE.out, stagger: 0.045, clearProps: 'transform' },
+              0.26,
+            );
+          }
           io.disconnect();
         });
       },
@@ -168,17 +240,31 @@ export default function About() {
     return () => io.disconnect();
   }, []);
 
-  // 翻页：换页时重置滚动位置，并让新页淡入
+  // 换页后：复位滚动 + 新页整体落位 + 条目逐条跟上
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
     body.scrollTop = 0;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    gsap.fromTo(
+    if (reducedMotion()) return;
+
+    const items = body.querySelectorAll('li');
+    const tl = gsap.timeline();
+    tl.fromTo(
       body,
-      { opacity: 0, y: 16 },
+      { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out, clearProps: 'transform' },
     );
+    if (items.length) {
+      tl.fromTo(
+        items,
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.5, ease: EASE.out, stagger: 0.035, clearProps: 'transform' },
+        0.06,
+      );
+    }
+    return () => {
+      tl.kill();
+    };
   }, [index]);
 
   /**
@@ -270,10 +356,12 @@ export default function About() {
           <div className={styles.avatar}>
             {showAvatar ? (
               <img
-                className={styles.avatarImg}
+                ref={avatarRef}
+                className={`${styles.avatarImg} ${avatarLoaded ? styles.avatarImgLoaded : ''}`}
                 src={ABOUT.avatar}
                 alt=""
                 decoding="async"
+                onLoad={() => setAvatarLoaded(true)}
                 onError={() => setAvatarBroken(true)}
               />
             ) : (
@@ -297,7 +385,7 @@ export default function About() {
           tabIndex={0}
           onKeyDown={onKeyDown}
         >
-          <h3 className={styles.pageTitle}>{page.question}</h3>
+          <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.question}</h3>
 
           <div className={styles.pageBody} ref={bodyRef} data-page={page.id} tabIndex={0}>
             {page.layout === 'grid' ? (

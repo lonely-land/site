@@ -1,6 +1,13 @@
 /* About（人设卡 + 3 页分页器）
-   排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token。
-   尺寸比例对齐 Figma「Profile」文件量到的值（849 宽的 frame：标题 (41,46)、
+
+   设计语言对齐（与 Gallery / Friends / Footer 保持一致）：
+   - 页标题直接套全局 .sectionTitle（Boska 400 / --fs-title），模块里只留位置
+   - 卡片语言 = --ink-2 + --line + --radius-card + --shadow-1（同 ApplyDialog / Friends）
+   - 图片一律「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
+   - 正文/说明用 --fs-body + --text-dim（同 Friends 的 cardDesc）
+   - 所有过渡走 --dur-* / --ease-*
+
+   版式比例对齐 Figma「Profile」文件量到的值（849 宽的 frame：标题 (41,46)、
    圆点右缘垂直居中、番剧行 738×232 缩略图 148×198、游戏行 738×166 图标 105×105）。 */
 
 .about {
@@ -30,10 +37,11 @@
   background: var(--ink-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
   overflow: hidden;
 }
 
-/* 只给读屏用的区块标题（这一屏的可见大标题是当前页的问题） */
+/* 只给读屏用的区块名（可见大标题是当前页的问题） */
 .srOnly {
   position: absolute;
   width: 1px;
@@ -48,6 +56,11 @@
 }
 
 /* ---- 人设卡 ---- */
+/* 卡片整列垂直居中：头像是方图，否则文字下方会留一大片空 */
+.profile {
+  justify-content: center;
+}
+
 .avatar {
   position: relative;
   flex: 0 0 auto;
@@ -66,6 +79,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.avatarImgLoaded {
+  opacity: 1;
 }
 
 .avatarInitial {
@@ -111,14 +130,10 @@
   padding: clamp(18px, 3.2vw, 46px);
 }
 
+/* 字体字号全部来自全局 .sectionTitle（与 Gallery / Friends 同一个源） */
 .pageTitle {
   margin: 0 0 clamp(12px, 1.6vw, 24px);
   flex: 0 0 auto;
-  font-family: var(--font-alimama), var(--font-fallback);
-  font-weight: 700;
-  font-size: var(--fs-title);
-  line-height: 1.1;
-  color: var(--text);
 }
 
 /* 页内容：能滚就自己滚（滚轮归属见 About.tsx） */
@@ -146,7 +161,7 @@
   border-radius: var(--radius-media);
 }
 
-/* ---- 封面 ---- */
+/* ---- 封面：骨架 + 淡入（关键帧与 Gallery 同源） ---- */
 .thumb {
   position: relative;
   display: flex;
@@ -157,7 +172,24 @@
   overflow: hidden;
   border-radius: var(--radius-media);
   background: var(--ink-3);
-  border: 1px solid var(--line);
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, var(--ink-2) 30%, var(--ink-3) 50%, var(--ink-2) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s var(--ease-in-out) infinite;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .thumbImg {
@@ -165,6 +197,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out),
+    filter var(--dur-base) var(--ease-out);
+}
+
+.thumbImgLoaded {
+  opacity: 1;
 }
 
 .thumbInitial {
@@ -175,7 +215,7 @@
   user-select: none;
 }
 
-/* ---- 歌手：方形封面网格（设计稿 4 列，卡片间隔 47） ---- */
+/* ---- 歌手：方形封面网格（设计稿 4 列、卡片间隔 47） ---- */
 .tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -190,11 +230,18 @@
   min-width: 0;
 }
 
+.tile:hover .thumbImg {
+  transform: scale(1.05);
+}
+
+.tile:hover .thumbImgLoaded {
+  filter: brightness(1.08);
+}
+
 .tileName {
   margin: var(--space-2) 0 0;
   font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
-  /* 设计稿 24px，正好是 --fs-body 的 1.2 倍 */
-  font-size: calc(var(--fs-body) * 1.2);
+  font-size: var(--fs-body);
   font-weight: 500;
   line-height: 1.2;
   color: var(--text);
@@ -223,6 +270,11 @@
   border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--ink-3);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.row:hover {
+  box-shadow: var(--shadow-1);
 }
 
 /* 行底图 + 统一压暗（设计稿是 85% 黑，这里用等价的 --scrim-card 0.86） */
@@ -236,6 +288,12 @@
 
 .rowBg {
   object-fit: cover;
+  transform: scale(1);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.row:hover .rowBg {
+  transform: scale(1.03);
 }
 
 .rowScrim {
@@ -257,10 +315,11 @@
   padding-top: clamp(2px, 0.7vw, 10px);
 }
 
+/* 与 Friends 的 cardName / cardDesc 同一组字体角色与字重 */
 .rowTitle {
   margin: 0;
-  font-family: var(--font-alimama), var(--font-fallback);
-  font-weight: 700;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-weight: 500;
   font-size: var(--fs-h2);
   line-height: 1.2;
   color: var(--text);
@@ -270,8 +329,8 @@
   margin: var(--space-2) 0 0;
   font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
   font-size: var(--fs-body);
-  font-weight: 500;
-  line-height: 1.4;
+  font-weight: 400;
+  line-height: 1.35;
   color: var(--text-dim);
 }
 
@@ -320,7 +379,7 @@
   height: clamp(10px, 1vw, 14px);
   border-radius: var(--radius-pill);
   background: var(--text-mute);
-  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  transition: background var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 
 .dot:hover::before {
@@ -338,7 +397,7 @@
   border-radius: var(--radius-pill);
 }
 
-/* ---- 窄屏：人设卡压扁到顶部，标题降一档，圆点移到右上角 ---- */
+/* ---- 窄屏：人设卡压扁到顶部，圆点移到右上角 ---- */
 @media (max-width: 1023px) {
   .about {
     padding: 4vh 5vw;
@@ -371,10 +430,10 @@
     padding: var(--space-4);
   }
 
+  /* 给右上角那排圆点让位（纯布局，字号仍由 .sectionTitle 决定） */
   .pageTitle {
-    font-size: var(--fs-h2);
-    margin-bottom: var(--space-3);
     padding-right: calc(3 * 24px + var(--space-2));
+    margin-bottom: var(--space-3);
   }
 
   .pageBody {
@@ -425,15 +484,31 @@
     padding: 3vh 4vw;
   }
 
-  .panel {
-    padding: var(--space-3);
-  }
-
+  .panel,
   .pager {
     padding: var(--space-3);
   }
 
   .pageTitle {
     margin-bottom: var(--space-2);
+  }
+}
+
+/* ---- 无障碍：跟随系统关闭动效 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .avatarImg,
+  .thumbImg,
+  .rowBg,
+  .dot::before {
+    transition: none;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+
+  .tile:hover .thumbImg,
+  .row:hover .rowBg {
+    transform: none;
   }
 }
