@@ -1,0 +1,425 @@
+/* About：分页器（Music / Anime / Games）
+
+   设计语言对齐站点现有区块：
+   - 不套面板底色（同 Gallery），卡片感由条目自己提供
+   - 标题走全局 .sectionTitle，头部一行「标题在左、分页点在右」（同 GalleryPage header）
+   - 排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token
+   - 图片统一「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
+
+   版式比例取自 Figma「Profile」：歌手方格 4 列、番剧行缩略图 148×198、
+   游戏行图标 105×105、行底图统一 85% 压暗（--scrim-card 0.86）。 */
+
+.about {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: var(--block-height);
+  padding: 3vh 4vw 4vh;
+  background: var(--ink);
+  overflow: hidden;
+}
+
+/* 只给读屏用的区块名 */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- 头部：标题在左，分页点在右 ---- */
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex: 0 0 auto;
+  margin-bottom: 4vh;
+}
+
+/* 字体字号全部来自全局 .sectionTitle（与 Gallery / Friends 同一个源） */
+.pageTitle {
+  margin: 0;
+}
+
+.dots {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-1);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  width: clamp(10px, 1vw, 14px);
+  height: clamp(10px, 1vw, 14px);
+  border-radius: var(--radius-pill);
+  background: var(--text-mute);
+  transition: background var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.dot:hover::before {
+  background: var(--text-dim);
+}
+
+.dotActive::before {
+  background: var(--text);
+  transform: scale(1.15);
+}
+
+.dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---- 页内容：能滚就自己滚（滚轮归属见 About.tsx） ---- */
+.pageBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* 纵向手势留给页内容自己（拨码轮由 JS 在边缘放行） */
+  touch-action: pan-y;
+}
+
+.pageBody::-webkit-scrollbar {
+  display: none;
+}
+
+.pageBody:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 6px;
+  border-radius: var(--radius-media);
+}
+
+/* ---- 封面：骨架 + 淡入（关键帧与 Gallery 同源） ---- */
+.thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+  background: var(--ink-3);
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, var(--ink-2) 30%, var(--ink-3) 50%, var(--ink-2) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s var(--ease-in-out) infinite;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.thumbImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out),
+    filter var(--dur-base) var(--ease-out);
+}
+
+.thumbImgLoaded {
+  opacity: 1;
+}
+
+.thumbInitial {
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: var(--text-mute);
+  user-select: none;
+}
+
+/* ---- 外链热区：铺满条目，箭头只在 hover / 聚焦时出现 ---- */
+.itemLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: var(--space-3);
+  text-decoration: none;
+}
+
+.tile .itemLink {
+  padding: var(--space-2);
+}
+
+.itemLink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-card);
+}
+
+.tile .itemLink:focus-visible {
+  border-radius: var(--radius-media);
+}
+
+.linkIcon {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--scrim);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.row:hover .linkIcon,
+.tile:hover .linkIcon,
+.itemLink:focus-visible .linkIcon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- 歌手：方形封面网格（设计稿 4 列、卡片间隔 47） ---- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(18px, 3.3vw, 47px) clamp(14px, 3.3vw, 47px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: relative;
+  min-width: 0;
+}
+
+.tile:hover .thumbImg {
+  transform: scale(1.05);
+}
+
+.tile:hover .thumbImgLoaded {
+  filter: brightness(1.08);
+}
+
+.tileName {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 番剧 / 游戏：底图横条 ---- */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.4vw, 24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(16px, 2.3vw, 33px);
+  padding: clamp(10px, 1.2vw, 17px) clamp(14px, 2vw, 28px) clamp(10px, 1.2vw, 17px)
+    clamp(8px, 0.9vw, 13px);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--ink-3);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.row:hover {
+  box-shadow: var(--shadow-1);
+}
+
+/* 行底图 + 统一压暗（设计稿是 85% 黑，这里用等价的 --scrim-card 0.86） */
+.rowBg,
+.rowScrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rowBg {
+  object-fit: cover;
+  transform: scale(1);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.row:hover .rowBg {
+  transform: scale(1.03);
+}
+
+.rowScrim {
+  background: var(--scrim-card);
+}
+
+.rowThumb {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: clamp(88px, 10.3vw, 148px);
+  aspect-ratio: 148 / 198;
+}
+
+.rowText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  /* 行是整屏宽的，正文限一下行宽，别拉成一整行 */
+  max-width: 68ch;
+  padding-top: clamp(2px, 0.7vw, 10px);
+}
+
+/* 与 Friends 的 cardName / cardDesc 同一组字体角色与字重 */
+.rowTitle {
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-weight: 500;
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.rowDesc {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+/* 游戏行：图标 105×105、整行更矮（设计稿 166 高） */
+[data-page='games'] .row {
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 22px);
+  padding: clamp(12px, 2.1vw, 31px) clamp(14px, 2vw, 28px) clamp(12px, 2.1vw, 31px)
+    clamp(16px, 2.3vw, 33px);
+}
+
+[data-page='games'] .rowThumb {
+  width: clamp(64px, 7.3vw, 132px);
+  aspect-ratio: 1 / 1;
+}
+
+[data-page='games'] .rowText {
+  padding-top: 0;
+}
+
+/* ---- 窄屏 ---- */
+@media (max-width: 1023px) {
+  .about {
+    padding: 4vh 5vw;
+  }
+
+  .head {
+    margin-bottom: var(--space-4);
+  }
+
+  /* 2 列：8 张正好 4 行铺满一屏，3 列会剩 300px 空白 */
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .tileName {
+    font-size: var(--fs-caption);
+  }
+
+  .rowThumb {
+    width: clamp(72px, 22vw, 120px);
+  }
+
+  [data-page='games'] .rowThumb {
+    width: clamp(56px, 17vw, 88px);
+  }
+
+  .rowTitle {
+    font-size: var(--fs-body);
+  }
+
+  .rowDesc {
+    font-size: var(--fs-caption);
+    -webkit-line-clamp: 4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ---- 矮视口：留白收一收 ---- */
+@media (max-height: 700px) {
+  .about {
+    padding: 3vh 4vw;
+  }
+
+  .head {
+    margin-bottom: var(--space-3);
+  }
+}
+
+/* ---- 无障碍：跟随系统关闭动效 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .thumbImg,
+  .rowBg,
+  .dot::before {
+    transition: none;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+
+  .tile:hover .thumbImg,
+  .row:hover .rowBg {
+    transform: none;
+  }
+
+  .linkIcon {
+    transition: none;
+    transform: none;
+  }
+}
