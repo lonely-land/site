@@ -21,35 +21,43 @@
                 "items": [
                     {
                         "title": "Will Stetson",
-                        "image": "https://land.c0ffee.space/images/about/singer-1.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-1.webp",
+                        "url": "https://music.163.com/#/artist?id=34243749"
                     },
                     {
                         "title": "OneRepublic",
-                        "image": "https://land.c0ffee.space/images/about/singer-2.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-2.webp",
+                        "url": "https://music.163.com/#/artist?id=98105"
                     },
                     {
                         "title": "JVKE",
-                        "image": "https://land.c0ffee.space/images/about/singer-3.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-3.webp",
+                        "url": "https://music.163.com/#/artist?id=32988392"
                     },
                     {
                         "title": "DOUDOU",
-                        "image": "https://land.c0ffee.space/images/about/singer-4.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-4.webp",
+                        "url": "https://music.163.com/#/artist?id=57076584"
                     },
                     {
                         "title": "武言圣",
-                        "image": "https://land.c0ffee.space/images/about/singer-5.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-5.webp",
+                        "url": "https://music.163.com/#/artist?id=12496446"
                     },
                     {
                         "title": "卦者灵风",
-                        "image": "https://land.c0ffee.space/images/about/singer-6.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-6.webp",
+                        "url": "https://music.163.com/#/artist?id=12498266"
                     },
                     {
                         "title": "Marcin",
-                        "image": "https://land.c0ffee.space/images/about/singer-7.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-7.webp",
+                        "url": "https://music.163.com/#/artist?id=12763402"
                     },
                     {
                         "title": "acloudyskye",
-                        "image": "https://land.c0ffee.space/images/about/singer-8.webp"
+                        "image": "https://land.c0ffee.space/images/about/singer-8.webp",
+                        "url": "https://music.163.com/#/artist?id=12493023"
                     }
                 ]
             },
@@ -63,55 +71,64 @@
                         "title": "记忆管理局",
                         "desc": "关潮为了能回到过去，寻找着能启动时间枪的能源“灼石”，却意外掉入了记忆管理局。为了能重新回到现实，关潮和方糖、百重等记忆管理员一起逐层回收记忆层中的BUG人。随着一场场战斗相继落幕，关潮要面对的是……",
                         "image": "https://land.c0ffee.space/images/about/anime-1-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-1-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-1-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md23774118"
                     },
                     {
                         "title": "非人哉",
                         "desc": "中国古典神话传说中的“著名”精怪是如何在现代社会生存下去，他们成为了我们身边有着神仙特色的宅女、暖男、上班族、犬系男友，他们上演着生活中搞笑而怪诞的小故事，关乎快乐、关乎友情，在我们平凡、忙碌的日常构建了不可思议的二次元神仙幻境。",
                         "image": "https://land.c0ffee.space/images/about/anime-2-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-2-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-2-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md13372924"
                     },
                     {
                         "title": "时光代理人",
                         "desc": "李天辰事件告一段落后，时光照相馆恢复了表面的平静，然而夏斐失踪的消息再次将众人卷入了命运的交叉点。\r\n随着Vein的回归与乔苓超能力的觉醒，程小时和陆光逐步触及到Bahati火灾案的秘密，而程小时的父亲程伟民和母亲邵媛媛似乎也与之有千丝万缕的联系。\r随着调查深入...",
                         "image": "https://land.c0ffee.space/images/about/anime-3-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-3-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-3-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28230742"
                     },
                     {
                         "title": "猫之茗",
                         "desc": "夏至城主一心为城为民，人民安居乐业，GDP蒸蒸日上，家庭幸福美满。然而一场大雨却成为了灾难的开始，人祸接连不断、反派(普洱)强盗(祁红)唯恐天下不乱。城主牺牲自我却只换来流言蜚语，连情比金坚的妻子也心生间隙。走投无路之时，一位意外的客人突然来访...",
                         "image": "https://land.c0ffee.space/images/about/anime-4-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-4-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-4-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28223054"
                     },
                     {
                         "title": "罗小黑战记",
                         "desc": "猫妖小黑盗取天明珠被谛听发现，被打回原形重伤而逃，在流落街头之时被罗小白带回了家，起名罗小黑。 有一天小黑突然变成了人形，告诉小白自己要暂时离开去完成师父交给自己的任务。却在离开之后因为师傅交给自己的任务又回到了小白身边，等待着他们的会是什么呢……",
                         "image": "https://land.c0ffee.space/images/about/anime-5-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-5-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-5-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md1733"
                     },
                     {
                         "title": "我的三体",
                         "desc": "故事发生在从近未来到两百年后的历史跨度上，地球文明被三体用一种叫做智子的超级科技锁死，基础研究因而停滞不前。但人类仍然需要在此基础上不断前进来抵御即将到来的三体人的进攻，守卫自己的家园和人类文明。",
                         "image": "https://land.c0ffee.space/images/about/anime-6-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-6-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-6-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28223557"
                     },
                     {
                         "title": "工作细胞 中配版",
                         "desc": "这是一个关于你自身的故事。你体内的故事——。人的细胞数量，约为37兆2千亿个。细胞们在名为身体的世界中，今天也精神满满、无休无眠地在工作着。运送着氧气的红细胞，与细菌战斗的白细胞……！这里，有着细胞们不为人知的故事。",
                         "image": "https://land.c0ffee.space/images/about/anime-7-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-7-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-7-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28233568"
                     },
                     {
                         "title": "獭獭突然想到",
                         "desc": "爱喝可乐、性格懒懒的獭獭继续脑洞大开，在无比真实的日常中，幻想升级！獭獭和他的朋友们一起，带你一起发现生活中各种精彩可能，轻轻松松面对各种生活真实挑战！懒懒的旱獭，懒懒的你，和獭獭一起快乐抖起来吧！",
                         "image": "https://land.c0ffee.space/images/about/anime-8-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-8-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-8-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28229155"
                     },
                     {
                         "title": "有兽焉",
                         "desc": "上古神兽貔貅皮皮来到了人间，为了躲避人类追捕，逃到了好友四不像开的专门帮助神兽的鹿人店，并结识了一群来自四面八方，性格各异的神兽，开始了远离人烟，轻松惬意的日常。",
                         "image": "https://land.c0ffee.space/images/about/anime-9-thumb.webp",
-                        "bg": "https://land.c0ffee.space/images/about/anime-9-art.webp"
+                        "bg": "https://land.c0ffee.space/images/about/anime-9-art.webp",
+                        "url": "https://www.bilibili.com/bangumi/media/md28235647"
                     }
                 ]
             },

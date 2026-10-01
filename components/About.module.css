@@ -130,6 +130,13 @@
   padding: clamp(18px, 3.2vw, 46px);
 }
 
+/* 中文问题降级成标题上方的小字（大标题是英文单词） */
+.pageEyebrow {
+  margin: 0 0 var(--space-2);
+  flex: 0 0 auto;
+  color: var(--text-mute);
+}
+
 /* 字体字号全部来自全局 .sectionTitle（与 Gallery / Friends 同一个源） */
 .pageTitle {
   margin: 0 0 clamp(12px, 1.6vw, 24px);
@@ -227,6 +234,7 @@
 }
 
 .tile {
+  position: relative;
   min-width: 0;
 }
 
@@ -248,6 +256,51 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---- 外链热区：铺满条目，箭头只在 hover / 聚焦时出现 ---- */
+.rowLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: var(--space-3);
+  text-decoration: none;
+}
+
+.tile .rowLink {
+  padding: var(--space-2);
+}
+
+.rowLink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-card);
+}
+
+.tile .rowLink:focus-visible {
+  border-radius: var(--radius-media);
+}
+
+.linkIcon {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--scrim);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.row:hover .linkIcon,
+.tile:hover .linkIcon,
+.rowLink:focus-visible .linkIcon {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ---- 番剧 / 游戏：底图横条 ---- */
@@ -509,6 +562,11 @@
 
   .tile:hover .thumbImg,
   .row:hover .rowBg {
+    transform: none;
+  }
+
+  .linkIcon {
+    transition: none;
     transform: none;
   }
 }

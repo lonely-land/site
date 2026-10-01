@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import { ArrowUpRight } from 'lucide-react';
 import styles from './About.module.css';
 import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
@@ -26,6 +27,8 @@ type AboutItem = {
   image?: string;
   /** 行底图（番剧/游戏行铺满整行的暗底图） */
   bg?: string;
+  /** 外链：歌手→网易云、番剧→B 站 */
+  url?: string;
 };
 
 type AboutPage = {
@@ -98,6 +101,7 @@ function ListRow({ item }: { item: AboutItem }) {
         <img className={styles.rowBg} src={item.bg} alt="" loading="lazy" decoding="async" />
       ) : null}
       <span className={styles.rowScrim} aria-hidden />
+      {item.url ? <RowLink item={item} /> : null}
       <Thumb item={item} className={styles.rowThumb} />
       <div className={styles.rowText}>
         <p className={styles.rowTitle}>{item.title}</p>
@@ -108,9 +112,25 @@ function ListRow({ item }: { item: AboutItem }) {
 }
 
 /** 方形封面 + 名字 */
+/** 整块热区的外链：铺满父容器，标题即链接名，右上角一个箭头作为可点提示 */
+function RowLink({ item }: { item: AboutItem }) {
+  return (
+    <a
+      className={styles.rowLink}
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${item.title}（新标签页打开）`}
+    >
+      <ArrowUpRight className={styles.linkIcon} aria-hidden focusable="false" />
+    </a>
+  );
+}
+
 function GridTile({ item }: { item: AboutItem }) {
   return (
     <li className={styles.tile}>
+      {item.url ? <RowLink item={item} /> : null}
       <Thumb item={item} />
       <p className={styles.tileName}>{item.title}</p>
     </li>
@@ -385,7 +405,10 @@ export default function About() {
           tabIndex={0}
           onKeyDown={onKeyDown}
         >
-          <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.question}</h3>
+          {page.question ? (
+            <p className={`caption ${styles.pageEyebrow}`}>{page.question}</p>
+          ) : null}
+          <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.title || page.question}</h3>
 
           <div className={styles.pageBody} ref={bodyRef} data-page={page.id} tabIndex={0}>
             {page.layout === 'grid' ? (
