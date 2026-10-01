@@ -1,0 +1,430 @@
+/* About（人设卡 + 三类收藏）
+   排版 / 颜色 / 圆角 / 阴影 / 动效全部走 globals.css 的 token，
+   这里不出现裸 #hex / rgba / 魔法字号。
+
+   两套排版：
+   - ≥1024px：四栏 grid，一屏放下，不产生嵌套滚动
+   - <1024px：人设卡压扁到顶部，三个分类各自变成横向 snap 轨道 */
+
+.about {
+  position: relative;
+  width: 100%;
+  height: var(--block-height);
+  padding: 5vh 4vw;
+  background: var(--ink);
+  overflow: hidden;
+  /* 封面网格在窄屏要靠「轨道高度 - 一行标题」反推方块宽度，
+     这个组合值只在这里算一次，避免各处写魔法数字 */
+  --tile-caption: calc(var(--fs-caption) * 1.4 + var(--space-1));
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.85fr) repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+}
+
+/* 只给读屏用的标题（这一屏没有可见的区块大标题） */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- 面板 ---- */
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-4);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex: 0 0 auto;
+}
+
+.panelTitle {
+  margin: 0 auto 0 0;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-weight: 400;
+  font-size: var(--fs-h2);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.panelQuestion {
+  margin: 0;
+  color: var(--text-mute);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---- 人设卡 ---- */
+.avatar {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+  background: var(--ink-3);
+}
+
+.avatarImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarInitial {
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-title);
+  line-height: 1;
+  color: var(--text-mute);
+}
+
+.profileText {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-weight: 400;
+  font-size: var(--fs-h2);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.meta {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.tagline {
+  margin: 0;
+  color: var(--text-mute);
+}
+
+/* ---- 滚动轨道 ---- */
+.rail {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  border-radius: var(--radius-media);
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item,
+.itemLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.itemLink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-chip);
+}
+
+/* ---- 封面 ---- */
+.thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+  background: var(--ink-3);
+  border: 1px solid var(--line);
+  transition: filter var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.itemLink:hover .thumb,
+.itemLink:focus-visible .thumb {
+  filter: brightness(1.12);
+  border-color: var(--surface-2);
+}
+
+.thumbImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbInitial {
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: var(--text-mute);
+  user-select: none;
+}
+
+.itemText {
+  min-width: 0;
+}
+
+.itemTitle {
+  margin: 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemDesc {
+  margin: var(--space-1) 0 0;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- 分页圆点（只在停顿点少而明确时出现，横排在表头右端）---- */
+.dots {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  flex: 0 0 auto;
+  gap: var(--space-1);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--text-mute);
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.dot:hover::before {
+  background: var(--text-dim);
+}
+
+.dotActive::before {
+  background: var(--text);
+  transform: scale(1.4);
+}
+
+.dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---- 桌面：list 布局用「封面 + 文案」横排条目 ---- */
+@media (min-width: 1024px) {
+  .panel[data-layout='list'] .item,
+  .panel[data-layout='list'] .itemLink {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .panel[data-layout='list'] .thumb {
+    flex: 0 0 auto;
+    width: clamp(72px, 7.5vw, 128px);
+    aspect-ratio: 4 / 5;
+  }
+
+  /* grid 布局：三列方形封面（行高按内容走，不拉伸，避免行距被撑开） */
+  .panel[data-layout='grid'] .items {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: var(--space-3);
+  }
+}
+
+/* ---- 窄屏：人设卡压扁，分类面板变横向轨道 ---- */
+@media (max-width: 1023px) {
+  .about {
+    padding: 4vh 5vw;
+  }
+
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .profile {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .profile .avatar {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+  }
+
+  .profileText {
+    margin-top: 0;
+  }
+
+  .panel:not(.profile) {
+    flex: 1 1 0;
+  }
+
+  .rail {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    /* 横向由轨道自己滑，纵向手势留给拨码轮 */
+    touch-action: pan-x;
+  }
+
+  .items {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--space-3);
+    width: max-content;
+    height: 100%;
+  }
+
+  .item {
+    height: 100%;
+    scroll-snap-align: start;
+  }
+
+  /* 方形封面网格：方块宽度由「轨道高度 - 一行标题」反推（aspect-ratio 传递），
+     视口再矮也只是变小，不会被裁掉 */
+  .panel[data-layout='grid'] .item {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .panel[data-layout='grid'] .thumb {
+    flex: 0 0 auto;
+    height: calc(100% - var(--tile-caption));
+    width: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .panel[data-layout='grid'] .itemText {
+    flex: 0 0 auto;
+  }
+
+  /* 条目：封面 + 文案横排，整条占屏宽的大部分，露出下一张 */
+  .panel[data-layout='list'] .item,
+  .panel[data-layout='list'] .itemLink {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex: 0 0 min(72vw, 320px);
+    scroll-snap-align: start;
+  }
+
+  .panel[data-layout='list'] .thumb {
+    flex: 0 0 auto;
+    height: 100%;
+    width: auto;
+    aspect-ratio: 4 / 5;
+  }
+}
+
+/* ---- 矮视口（小屏手机 / 矮笔记本）：外壳与面板留白收一收，把高度让给内容 ---- */
+@media (max-height: 700px) {
+  .about {
+    padding: 3vh 4vw;
+  }
+
+  .grid {
+    gap: var(--space-2);
+  }
+
+  .panel {
+    padding: var(--space-3);
+  }
+
+  .panelHead {
+    margin-bottom: var(--space-2);
+  }
+
+  .items {
+    gap: var(--space-2);
+  }
+
+  .profile .avatar {
+    width: 48px;
+    height: 48px;
+  }
+}

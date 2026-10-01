@@ -3,6 +3,51 @@
     "landing": {
         "background": "https://land.c0ffee.space/images/full/landing-bg.webp"
     },
+    "about": {
+        "name": "Lonely",
+        "meta": ["13 岁", "初中生", "男"],
+        "avatar": "",
+        "tagline": "Take picture, write code and design product.",
+        "categories": [
+            {
+                "id": "music",
+                "title": "Music",
+                "question": "喜欢的歌手？",
+                "layout": "grid",
+                "items": [
+                    { "title": "Wil Stetson", "image": "" },
+                    { "title": "OneRepublic", "image": "" },
+                    { "title": "JVKE", "image": "" },
+                    { "title": "DOUDOU", "image": "" },
+                    { "title": "耶鸡桑", "image": "" },
+                    { "title": "静置闪光", "image": "" },
+                    { "title": "Marcin", "image": "" }
+                ]
+            },
+            {
+                "id": "anime",
+                "title": "Anime",
+                "question": "追什么番剧？",
+                "layout": "list",
+                "items": [
+                    { "title": "记忆管理局", "desc": "", "image": "" },
+                    { "title": "非人哉", "desc": "神话生物在现代都市上班的日常。", "image": "" },
+                    { "title": "时光代理人", "desc": "进入照片完成委托，时间从不免费。", "image": "" }
+                ]
+            },
+            {
+                "id": "games",
+                "title": "Games",
+                "question": "玩什么游戏？",
+                "layout": "list",
+                "items": [
+                    { "title": "Minecraft", "desc": "方块沙盒：建造、生存、红石机关。", "image": "" },
+                    { "title": "Alto's Adventure", "desc": "无尽雪坡滑行。", "image": "" },
+                    { "title": "Eggy Party", "desc": "多人派对闯关。", "image": "" }
+                ]
+            }
+        ]
+    },
     "gallery": [
         {
             "name": "Morning in Haikou",

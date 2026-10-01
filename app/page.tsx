@@ -1,4 +1,5 @@
 import Landing from "@/components/Landing";
+import About from "@/components/About";
 import Gallery from "@/components/Gallery";
 import Friends from "@/components/Friends";
 import Footer from "@/components/Footer";
@@ -14,13 +15,16 @@ export default function Home() {
           <Landing />
         </BlockScaleWrapper>
 
-        {/* Block 2: Gallery（首页只显示 3 张，完整版见 /gallery） */}
+        {/* Block 2: About（人设 + 三类收藏） */}
+        <About />
+
+        {/* Block 3: Gallery（首页只显示 3 张，完整版见 /gallery） */}
         <Gallery limit={3} />
 
-        {/* Block 3: Friends（友链堆叠展示） */}
+        {/* Block 4: Friends（友链堆叠展示） */}
         <Friends />
 
-        {/* Block 4: Footer（单独做响应式，确保 Lonely 大字和联系信息都可见） */}
+        {/* Block 5: Footer（单独做响应式，确保 Lonely 大字和联系信息都可见） */}
         <Footer />
       </SlotWheelTransition>
     </main>
