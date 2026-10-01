@@ -36,6 +36,10 @@
 /* ---- 头部：标题在左，分页点在右 ---- */
 .head {
   display: flex;
+  width: 100%;
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-5);
@@ -92,6 +96,12 @@
 /* ---- 页内容：能滚就自己滚（滚轮归属见 About.tsx） ---- */
 .pageBody {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -214,9 +224,9 @@
 /* ---- 歌手：方形封面网格（设计稿 4 列、卡片间隔 47） ---- */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(18px, 3.3vw, 47px) clamp(14px, 3.3vw, 47px);
-  margin: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(16px, 2.2vw, 30px) clamp(14px, 2.2vw, 30px);
+  margin: auto 0;
   padding: 0;
   list-style: none;
 }
@@ -248,10 +258,10 @@
 
 /* ---- 番剧 / 游戏：底图横条 ---- */
 .rows {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(12px, 2.4vw, 24px);
-  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 22px);
+  margin: auto 0;
   padding: 0;
   list-style: none;
 }
@@ -300,7 +310,7 @@
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: clamp(88px, 10.3vw, 148px);
+  width: clamp(84px, 8.5vw, 132px);
   aspect-ratio: 148 / 198;
 }
 
@@ -341,7 +351,7 @@
 }
 
 [data-page='games'] .rowThumb {
-  width: clamp(64px, 7.3vw, 132px);
+  width: clamp(64px, 6vw, 104px);
   aspect-ratio: 1 / 1;
 }
 
@@ -355,6 +365,11 @@
     padding: 4vh 5vw;
   }
 
+  .head,
+  .pageBody {
+    max-width: none;
+  }
+
   .head {
     margin-bottom: var(--space-4);
   }
@@ -362,6 +377,12 @@
   /* 2 列：8 张正好 4 行铺满一屏，3 列会剩 300px 空白 */
   .tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  /* 窄屏番剧/游戏回到单列整宽 */
+  .rows {
+    grid-template-columns: 1fr;
     gap: var(--space-3);
   }
 
