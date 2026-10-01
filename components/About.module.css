@@ -1,10 +1,7 @@
-/* About（人设卡 + 三类收藏）
-   排版 / 颜色 / 圆角 / 阴影 / 动效全部走 globals.css 的 token，
-   这里不出现裸 #hex / rgba / 魔法字号。
-
-   两套排版：
-   - ≥1024px：四栏 grid，一屏放下，不产生嵌套滚动
-   - <1024px：人设卡压扁到顶部，三个分类各自变成横向 snap 轨道 */
+/* About（人设卡 + 3 页分页器）
+   排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token。
+   尺寸比例对齐 Figma「Profile」文件量到的值（849 宽的 frame：标题 (41,46)、
+   圆点右缘垂直居中、番剧行 738×232 缩略图 148×198、游戏行 738×166 图标 105×105）。 */
 
 .about {
   position: relative;
@@ -13,34 +10,16 @@
   padding: 5vh 4vw;
   background: var(--ink);
   overflow: hidden;
-  /* 封面网格在窄屏要靠「轨道高度 - 一行标题」反推方块宽度，
-     这个组合值只在这里算一次，避免各处写魔法数字 */
-  --tile-caption: calc(var(--fs-caption) * 1.4 + var(--space-1));
 }
 
-.grid {
+.layout {
   display: grid;
-  grid-template-columns: minmax(200px, 0.85fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(230px, 0.78fr) minmax(0, 2.2fr);
   gap: var(--space-4);
   height: 100%;
   min-height: 0;
 }
 
-/* 只给读屏用的标题（这一屏没有可见的区块大标题） */
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ---- 面板 ---- */
 .panel {
   position: relative;
   display: flex;
@@ -54,35 +33,26 @@
   overflow: hidden;
 }
 
-.panelHead {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-  flex: 0 0 auto;
-}
-
-.panelTitle {
-  margin: 0 auto 0 0;
-  font-family: var(--font-boska), var(--font-fallback);
-  font-weight: 400;
-  font-size: var(--fs-h2);
-  line-height: 1.1;
-  color: var(--text);
-}
-
-.panelQuestion {
-  margin: 0;
-  color: var(--text-mute);
-  text-align: right;
+/* 只给读屏用的区块标题（这一屏的可见大标题是当前页的问题） */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
+  border: 0;
 }
 
 /* ---- 人设卡 ---- */
 .avatar {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,63 +93,57 @@
   color: var(--text);
 }
 
-.meta {
+.meta,
+.tagline {
   margin: 0;
+}
+
+.meta {
   color: var(--text-dim);
 }
 
 .tagline {
-  margin: 0;
   color: var(--text-mute);
 }
 
-/* ---- 滚动轨道 ---- */
-.rail {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  border-radius: var(--radius-media);
+/* ---- 分页器 ---- */
+.pager {
+  padding: clamp(18px, 3.2vw, 46px);
 }
 
-.rail::-webkit-scrollbar {
+.pageTitle {
+  margin: 0 0 clamp(12px, 1.6vw, 24px);
+  flex: 0 0 auto;
+  font-family: var(--font-alimama), var(--font-fallback);
+  font-weight: 700;
+  font-size: var(--fs-title);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* 页内容：能滚就自己滚（滚轮归属见 About.tsx） */
+.pageBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: var(--space-5);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* 纵向手势留给页内容自己（拨码轮由 JS 在边缘放行） */
+  touch-action: pan-y;
+}
+
+.pageBody::-webkit-scrollbar {
   display: none;
 }
 
-.rail:focus-visible {
+.pageBody:focus-visible,
+.pager:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.item,
-.itemLink {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-  color: inherit;
-  text-decoration: none;
-}
-
-.itemLink:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: 2px;
-  border-radius: var(--radius-chip);
+  outline-offset: 4px;
+  border-radius: var(--radius-media);
 }
 
 /* ---- 封面 ---- */
@@ -194,13 +158,6 @@
   border-radius: var(--radius-media);
   background: var(--ink-3);
   border: 1px solid var(--line);
-  transition: filter var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
-}
-
-.itemLink:hover .thumb,
-.itemLink:focus-visible .thumb {
-  filter: brightness(1.12);
-  border-color: var(--surface-2);
 }
 
 .thumbImg {
@@ -218,37 +175,131 @@
   user-select: none;
 }
 
-.itemText {
+/* ---- 歌手：方形封面网格（设计稿 4 列，卡片间隔 47） ---- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(18px, 3.3vw, 47px) clamp(14px, 3.3vw, 47px);
+  max-width: 800px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
   min-width: 0;
 }
 
-.itemTitle {
-  margin: 0;
+.tileName {
+  margin: var(--space-2) 0 0;
   font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
-  font-size: var(--fs-caption);
+  /* 设计稿 24px，正好是 --fs-body 的 1.2 倍 */
+  font-size: calc(var(--fs-body) * 1.2);
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.2;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.itemDesc {
-  margin: var(--space-1) 0 0;
-  color: var(--text-dim);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* ---- 番剧 / 游戏：底图横条 ---- */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.4vw, 24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* ---- 分页圆点（只在停顿点少而明确时出现，横排在表头右端）---- */
-.dots {
+.row {
+  position: relative;
   display: flex;
-  flex-direction: row;
-  align-self: center;
+  align-items: flex-start;
+  gap: clamp(16px, 2.3vw, 33px);
+  padding: clamp(10px, 1.2vw, 17px) clamp(14px, 2vw, 28px) clamp(10px, 1.2vw, 17px)
+    clamp(8px, 0.9vw, 13px);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--ink-3);
+}
+
+/* 行底图 + 统一压暗（设计稿是 85% 黑，这里用等价的 --scrim-card 0.86） */
+.rowBg,
+.rowScrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rowBg {
+  object-fit: cover;
+}
+
+.rowScrim {
+  background: var(--scrim-card);
+}
+
+.rowThumb {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
+  width: clamp(88px, 10.3vw, 148px);
+  aspect-ratio: 148 / 198;
+}
+
+.rowText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding-top: clamp(2px, 0.7vw, 10px);
+}
+
+.rowTitle {
+  margin: 0;
+  font-family: var(--font-alimama), var(--font-fallback);
+  font-weight: 700;
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.rowDesc {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+/* 游戏行：图标 105×105、整行更矮（设计稿 166 高） */
+[data-page='games'] .row {
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 22px);
+  padding: clamp(12px, 2.1vw, 31px) clamp(14px, 2vw, 28px) clamp(12px, 2.1vw, 31px)
+    clamp(16px, 2.3vw, 33px);
+}
+
+[data-page='games'] .rowThumb {
+  width: clamp(64px, 7.3vw, 105px);
+  aspect-ratio: 1 / 1;
+}
+
+[data-page='games'] .rowText {
+  padding-top: 0;
+}
+
+/* ---- 分页圆点：设计稿在右缘垂直居中 ---- */
+.dots {
+  position: absolute;
+  top: 50%;
+  right: clamp(8px, 1.9vw, 27px);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-1);
 }
 
@@ -265,8 +316,8 @@
 
 .dot::before {
   content: '';
-  width: 6px;
-  height: 6px;
+  width: clamp(10px, 1vw, 14px);
+  height: clamp(10px, 1vw, 14px);
   border-radius: var(--radius-pill);
   background: var(--text-mute);
   transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
@@ -278,7 +329,7 @@
 
 .dotActive::before {
   background: var(--text);
-  transform: scale(1.4);
+  transform: scale(1.15);
 }
 
 .dot:focus-visible {
@@ -287,144 +338,102 @@
   border-radius: var(--radius-pill);
 }
 
-/* ---- 桌面：list 布局用「封面 + 文案」横排条目 ---- */
-@media (min-width: 1024px) {
-  .panel[data-layout='list'] .item,
-  .panel[data-layout='list'] .itemLink {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: var(--space-3);
-  }
-
-  .panel[data-layout='list'] .thumb {
-    flex: 0 0 auto;
-    width: clamp(72px, 7.5vw, 128px);
-    aspect-ratio: 4 / 5;
-  }
-
-  /* grid 布局：三列方形封面（行高按内容走，不拉伸，避免行距被撑开） */
-  .panel[data-layout='grid'] .items {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-content: start;
-    gap: var(--space-3);
-  }
-}
-
-/* ---- 窄屏：人设卡压扁，分类面板变横向轨道 ---- */
+/* ---- 窄屏：人设卡压扁到顶部，标题降一档，圆点移到右上角 ---- */
 @media (max-width: 1023px) {
   .about {
     padding: 4vh 5vw;
   }
 
-  .grid {
+  .layout {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
 
   .profile {
-    flex: 0 0 auto;
     flex-direction: row;
     align-items: center;
     gap: var(--space-4);
+    padding: var(--space-3);
   }
 
-  .profile .avatar {
-    flex: 0 0 auto;
-    width: 72px;
-    height: 72px;
+  .avatar {
+    width: 64px;
+    aspect-ratio: 1 / 1;
   }
 
   .profileText {
     margin-top: 0;
   }
 
-  .panel:not(.profile) {
+  .pager {
     flex: 1 1 0;
+    padding: var(--space-4);
   }
 
-  .rail {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    /* 横向由轨道自己滑，纵向手势留给拨码轮 */
-    touch-action: pan-x;
+  .pageTitle {
+    font-size: var(--fs-h2);
+    margin-bottom: var(--space-3);
+    padding-right: calc(3 * 24px + var(--space-2));
   }
 
-  .items {
+  .pageBody {
+    padding-right: 0;
+  }
+
+  .dots {
+    top: var(--space-4);
+    right: var(--space-4);
+    transform: none;
     flex-direction: row;
-    align-items: stretch;
+    gap: var(--space-1);
+  }
+
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-3);
-    width: max-content;
-    height: 100%;
   }
 
-  .item {
-    height: 100%;
-    scroll-snap-align: start;
+  .tileName {
+    font-size: var(--fs-caption);
   }
 
-  /* 方形封面网格：方块宽度由「轨道高度 - 一行标题」反推（aspect-ratio 传递），
-     视口再矮也只是变小，不会被裁掉 */
-  .panel[data-layout='grid'] .item {
-    flex: 0 0 auto;
-    width: auto;
+  .rowThumb {
+    width: clamp(72px, 22vw, 120px);
   }
 
-  .panel[data-layout='grid'] .thumb {
-    flex: 0 0 auto;
-    height: calc(100% - var(--tile-caption));
-    width: auto;
-    aspect-ratio: 1 / 1;
+  [data-page='games'] .rowThumb {
+    width: clamp(56px, 17vw, 88px);
   }
 
-  .panel[data-layout='grid'] .itemText {
-    flex: 0 0 auto;
+  .rowTitle {
+    font-size: var(--fs-body);
   }
 
-  /* 条目：封面 + 文案横排，整条占屏宽的大部分，露出下一张 */
-  .panel[data-layout='list'] .item,
-  .panel[data-layout='list'] .itemLink {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: var(--space-3);
-    flex: 0 0 min(72vw, 320px);
-    scroll-snap-align: start;
-  }
-
-  .panel[data-layout='list'] .thumb {
-    flex: 0 0 auto;
-    height: 100%;
-    width: auto;
-    aspect-ratio: 4 / 5;
+  .rowDesc {
+    font-size: var(--fs-caption);
+    -webkit-line-clamp: 4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
-/* ---- 矮视口（小屏手机 / 矮笔记本）：外壳与面板留白收一收，把高度让给内容 ---- */
+/* ---- 矮视口：留白收一收，把高度让给内容 ---- */
 @media (max-height: 700px) {
   .about {
     padding: 3vh 4vw;
-  }
-
-  .grid {
-    gap: var(--space-2);
   }
 
   .panel {
     padding: var(--space-3);
   }
 
-  .panelHead {
+  .pager {
+    padding: var(--space-3);
+  }
+
+  .pageTitle {
     margin-bottom: var(--space-2);
-  }
-
-  .items {
-    gap: var(--space-2);
-  }
-
-  .profile .avatar {
-    width: 48px;
-    height: 48px;
   }
 }
