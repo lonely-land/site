@@ -25,6 +25,8 @@
   gap: var(--space-4);
   height: 100%;
   min-height: 0;
+  /* 内容比一屏矮时整排垂直居中，别让两张卡片各自拖着半屏空白 */
+  align-content: center;
 }
 
 .panel {
@@ -33,6 +35,8 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  height: auto;
+  max-height: 100%;
   padding: var(--space-4);
   background: var(--ink-2);
   border: 1px solid var(--line);
@@ -128,13 +132,6 @@
 /* ---- 分页器 ---- */
 .pager {
   padding: clamp(18px, 3.2vw, 46px);
-}
-
-/* 中文问题降级成标题上方的小字（大标题是英文单词） */
-.pageEyebrow {
-  margin: 0 0 var(--space-2);
-  flex: 0 0 auto;
-  color: var(--text-mute);
 }
 
 /* 字体字号全部来自全局 .sectionTitle（与 Gallery / Friends 同一个源） */

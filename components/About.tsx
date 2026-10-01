@@ -405,9 +405,6 @@ export default function About() {
           tabIndex={0}
           onKeyDown={onKeyDown}
         >
-          {page.question ? (
-            <p className={`caption ${styles.pageEyebrow}`}>{page.question}</p>
-          ) : null}
           <h3 className={`sectionTitle ${styles.pageTitle}`}>{page.title || page.question}</h3>
 
           <div className={styles.pageBody} ref={bodyRef} data-page={page.id} tabIndex={0}>
