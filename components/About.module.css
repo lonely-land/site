@@ -270,7 +270,9 @@
 .row {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  /* 整行内容垂直居中：缩略图（146）比文字块（~85）高，顶对齐会让正文悬在
+     卡片上半部、下半部空一截（用户反馈「内容需居中于卡片中心」） */
+  align-items: center;
   gap: clamp(12px, 1.5vw, 20px);
   padding: clamp(9px, 0.9vw, 13px) clamp(12px, 1.6vw, 22px) clamp(9px, 0.9vw, 13px)
     clamp(8px, 0.9vw, 13px);
@@ -321,7 +323,6 @@
   min-width: 0;
   /* 行是整屏宽的，正文限一下行宽，别拉成一整行 */
   max-width: 68ch;
-  padding-top: clamp(2px, 0.7vw, 10px);
 }
 
 /* 与 Friends 的 cardName / cardDesc 同一组字体角色与字重；
@@ -350,9 +351,8 @@
   overflow: hidden;
 }
 
-/* 游戏行：图标更小、整行更矮（三列一行铺满） */
+/* 游戏行：图标更小、整行更矮（三列一行铺满）；垂直居中是基础规则 */
 [data-page='games'] .row {
-  align-items: center;
   gap: clamp(10px, 1.2vw, 16px);
   padding: clamp(10px, 1.3vw, 17px) clamp(12px, 1.6vw, 20px);
 }
@@ -360,10 +360,6 @@
 [data-page='games'] .rowThumb {
   width: clamp(56px, 5.2vw, 76px);
   aspect-ratio: 1 / 1;
-}
-
-[data-page='games'] .rowText {
-  padding-top: 0;
 }
 
 /* ---- 窄屏 ---- */
