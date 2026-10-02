@@ -6,7 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import styles from './About.module.css';
 import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx, type WheelGesture } from '@/lib/wheel-gesture';
+import { createWheelGesture, wheelDeltaPx, type WheelGesture } from '@/lib/wheel-gesture.mjs';
 
 /**
  * About：分页器（3 页：Music / Anime / Games）

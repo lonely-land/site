@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx } from '@/lib/wheel-gesture';
+import { createWheelGesture, wheelDeltaPx } from '@/lib/wheel-gesture.mjs';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
