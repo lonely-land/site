@@ -227,6 +227,25 @@ describe('余波里认得出"用户又推了一把"（连续推不该被尾巴�
   });
 });
 
+describe('"让给拨码轮"只在同一段手势内有效（不能永久粘住）', () => {
+  test('让位后本段手势继续放行', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    r.g.markYielded();
+    // 同一段手势的余波：状态机继续标 yielded，组件据此放行给外层
+    assert.equal(r.feed(30).yielded, true);
+    assert.equal(r.feed(30).yielded, true);
+  });
+
+  test('停手之后（新手势）自动收回让位，本块重新接管', () => {
+    const r = rig();
+    r.feed(BIG);
+    r.g.markYielded();
+    r.advance(WHEEL_GESTURE.idleMs + 40); // 停手
+    assert.equal(r.feed(T / 2 + 1).yielded, false, '新手势该由本块接管');
+  });
+});
+
 describe('鼠标格必须是"孤立事件"（主线程忙时合并出来的一帧不算格）', () => {
   test('连续流之后紧跟的稀疏大位移仍算流（不被当成鼠标格翻屏）', () => {
     const r = rig();

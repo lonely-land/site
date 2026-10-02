@@ -330,15 +330,16 @@ export default function About() {
     // 手势状态挂在 ref 上：翻页会重建这个 effect，但"同一段手势"要跨页延续，
     // 否则惯性尾巴会被新页面的闭包当成新手势
     const gesture = (gestureRef.current ??= createWheelGesture());
-    // 本段手势已经让给拨码轮（停在首/末页边缘），余波也要继续放行
-    let yieldedToWheel = false;
 
     /** 返回 true 表示事件已自己处理（不该再给拨码轮） */
     const claimWheel = (e: WheelEvent): boolean => {
       const deltaPx = wheelDeltaPx(e);
       // 每个事件都要过一遍状态机：它负责续期"同一段手势"（被吸收的事件也算）
-      const { fresh, absorbing, notch } = gesture.beginEvent(e);
-      if (fresh) yieldedToWheel = false;
+      const { absorbing, notch, yielded } = gesture.beginEvent(e);
+
+      // 本段手势已让给拨码轮（停在首/末页边缘）：余波继续放行，等**新手势**再恢复接管。
+      // 这个标志由手势状态机持有（fresh 时自动收回），不会永久粘住。
+      if (yielded) return false;
 
       // 这段手势已经翻过一页：余波连原生滚动都不许 —— 否则翻过去的新页面
       // 会被惯性直接滚到底（"用力猛一点就过头"的另一种形态）
@@ -363,7 +364,7 @@ export default function About() {
       if (step === 0) return true; // 未到阈值 or 同一段手势的余波 → 吃掉，不外传
       const next = indexRef.current + step;
       if (next < 0 || next >= PAGES.length) {
-        yieldedToWheel = true; // 首/末页边缘 → 整段手势让给拨码轮
+        gesture.markYielded(); // 首/末页边缘 → 整段手势让给拨码轮
         return false;
       }
       if (busyRef.current || Date.now() < dwellUntilRef.current) {
@@ -381,8 +382,9 @@ export default function About() {
         e.stopPropagation();
         return;
       }
-      // 已经让给拨码轮的那段手势，别再拦（否则余波到不了拨码轮，翻屏反而不触发）
-      if (yieldedToWheel) return;
+      // **绝不能在这里提前 return**：每个事件都必须过一遍 beginEvent，
+      // 否则"同一段手势"的判定会断掉，"让给拨码轮"的标志也永远等不到 fresh 复位
+      // （现象：从 Gallery 退回 Profile 后滚轮再也翻不动这一块的页，点一下分页点才好）
       // 只 stopPropagation，千万不要 preventDefault（除非上面明确要吸收余波）：
       // preventDefault 会连原生滚动一起取消掉（内容就永远滚不动、也永远到不了边缘）
       if (claimWheel(e)) e.stopPropagation();
