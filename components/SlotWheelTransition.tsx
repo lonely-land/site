@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
+import { createWheelGesture, wheelDeltaPx } from '@/lib/wheel-gesture';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
@@ -19,6 +20,9 @@ interface SlotWheelTransitionProps {
  *
  * 触发：wheel / touch / keyboard，scroll-snap 锁定每个 Block
  *
+ * wheel 的归属见 lib/wheel-gesture：一段手势（含触控板惯性尾巴）最多推进
+ * 一格，避免"用力猛一点就跳过一整屏"。
+ *
  * 动效说明：这里的 0.08 / 0.1 / 0.18s 是刻意为之的"机械感"编排
  * （蓄力→释放→过冲回弹），不走通用 token；与 token 等值的 0.4s 用 DURATION.base。
  */
@@ -27,7 +31,6 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const currentIndex = useRef(0);
   const isAnimating = useRef(false);
-  const wheelLockRef = useRef(0);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const touchStartTime = useRef(0);
@@ -183,10 +186,13 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
     const container = containerRef.current;
     if (!container) return;
 
+    // 一段手势最多推进一格：惯性尾巴（同一段手势）只吸收、不再触发
+    const gesture = createWheelGesture();
+
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      // 灯箱打开时不处理
+      // 灯箱打开时不做任何处理
       if (document.querySelector('[data-slot-lightbox]')) return;
 
       // Landing 未就绪时禁止切换（防止黑屏）
@@ -195,20 +201,16 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // Gallery 自行处理横向滚动并 stopPropagation，
       // 到达此处的事件来自非 Gallery 区域或 Gallery 已到边缘 → 切换 section
 
-      // wheel lock 期间忽略（吸收触控板惯性）
-      if (Date.now() < wheelLockRef.current) return;
+      // 注意：动画中也要把事件喂进手势（beginEvent 负责续期"同一段手势"），
+      // 否则惯性尾巴会被误判成"新手势"，动画一结束就又跳一格
+      // —— 这正是"用力猛一点就划过头"的来源
+      const { absorbing } = gesture.beginEvent();
+      if (absorbing) return;
+      const step = gesture.takeStep(wheelDeltaPx(e));
+      if (step === 0) return;
       if (isAnimating.current) return;
 
-      // 首次有效滚动立即触发，不累积 delta
-      if (Math.abs(e.deltaY) > 5) {
-        if (e.deltaY > 0) {
-          goToSectionRef.current(currentIndex.current + 1);
-        } else {
-          goToSectionRef.current(currentIndex.current - 1);
-        }
-        // 锁定 900ms 吸收触控板惯性余波
-        wheelLockRef.current = Date.now() + 900;
-      }
+      goToSectionRef.current(currentIndex.current + step);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });

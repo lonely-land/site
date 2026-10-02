@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import styles from './About.module.css';
 import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
+import { createWheelGesture, wheelDeltaPx, type WheelGesture } from '@/lib/wheel-gesture';
 
 /**
  * About：分页器（3 页：Music / Anime / Games）
@@ -136,6 +137,8 @@ export default function About() {
   const indexRef = useRef(0);
   const lockRef = useRef(0);
   const busyRef = useRef(false);
+  /** 滚轮手势状态：跨页延续（见下面 wheel effect 的说明） */
+  const gestureRef = useRef<WheelGesture | null>(null);
   const playedRef = useRef(false);
   const [index, setIndex] = useState(0);
 
@@ -266,27 +269,61 @@ export default function About() {
 
   /**
    * 滚轮 / 触摸的归属：
-   * 1) 页内容还能滚 → 自己吃掉，让内容滚
-   * 2) 已到边缘 + 还有上一页/下一页 → 翻页
+   * 1) 页内容还能滚 → 自己吃掉，让内容滚（整段手势就此归列表，不再翻页）
+   * 2) 已到边缘 + 还有上一页/下一页 → 翻页（一段手势只翻一页）
    * 3) 首尾页的边缘 → 不拦截，交给拨码轮翻屏
+   *
+   * "一段手势只兑现一次动作"是刻意的：原先列表滚到底后，同一次划动的惯性
+   * 余波会接着翻页、再翻屏（用户反馈"用力猛一点就划过头"）。
    */
   useEffect(() => {
     const el = bodyRef.current;
-    if (!el) return;
+    const root = rootRef.current;
+    if (!el || !root) return;
 
     const canScroll = () => el.scrollHeight - el.clientHeight > 8;
     const atTop = () => el.scrollTop <= 1;
     const atBottom = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+    const listCanMove = (deltaPx: number) => (deltaPx > 0 ? !atBottom() : !atTop());
+
+    // 手势状态挂在 ref 上：翻页会重建这个 effect，但"同一段手势"要跨页延续，
+    // 否则惯性尾巴会被新页面的闭包当成新手势
+    const gesture = (gestureRef.current ??= createWheelGesture());
+    // 本段手势已经让给拨码轮（停在首/末页边缘），余波也要继续放行
+    let yieldedToWheel = false;
 
     /** 返回 true 表示事件已自己处理（不该再给拨码轮） */
-    const claim = (deltaY: number): boolean => {
-      if (canScroll()) {
-        if (deltaY > 0 ? !atBottom() : !atTop()) return true; // 交给原生滚动
+    const claimWheel = (e: WheelEvent): boolean => {
+      const deltaPx = wheelDeltaPx(e);
+      // 每个事件都要过一遍状态机：它负责续期"同一段手势"（被吸收的事件也算）
+      const { fresh, absorbing } = gesture.beginEvent();
+      if (fresh) yieldedToWheel = false;
+
+      // 这段手势已经翻过一页：余波连原生滚动都不许 —— 否则翻过去的新页面
+      // 会被惯性直接滚到底（"用力猛一点就过头"的另一种形态）
+      if (absorbing) {
+        e.preventDefault();
+        return true;
       }
-      const next = deltaY > 0 ? indexRef.current + 1 : indexRef.current - 1;
-      if (next < 0 || next >= PAGES.length) return false; // 首/末页边缘 → 放行
-      if (Date.now() < lockRef.current) return true; // 吸收惯性余波
-      lockRef.current = Date.now() + 700;
+
+      if (canScroll() && listCanMove(deltaPx)) {
+        // 指针不在列表上（标题/分页点/空白处）：滚轮一样归这块的列表，
+        // 手动滚而不是放行 —— 否则"指针停在标题上滚一下"会整屏翻走
+        if (!el.contains(e.target as Node)) {
+          e.preventDefault();
+          el.scrollTop += deltaPx;
+        }
+        gesture.markConsumedByContent(); // 归列表：这段手势不再翻页
+        return true;
+      }
+
+      const step = gesture.takeStep(deltaPx);
+      if (step === 0) return true; // 未到阈值 or 同一段手势的余波 → 吃掉，不外传
+      const next = indexRef.current + step;
+      if (next < 0 || next >= PAGES.length) {
+        yieldedToWheel = true; // 首/末页边缘 → 整段手势让给拨码轮
+        return false;
+      }
       goTo(next);
       return true;
     };
@@ -296,34 +333,54 @@ export default function About() {
         e.stopPropagation();
         return;
       }
-      // 只 stopPropagation，千万不要 preventDefault：
+      // 已经让给拨码轮的那段手势，别再拦（否则余波到不了拨码轮，翻屏反而不触发）
+      if (yieldedToWheel) return;
+      // 只 stopPropagation，千万不要 preventDefault（除非上面明确要吸收余波）：
       // preventDefault 会连原生滚动一起取消掉（内容就永远滚不动、也永远到不了边缘）
-      if (claim(e.deltaY)) e.stopPropagation();
+      if (claimWheel(e)) e.stopPropagation();
     };
 
     let startY = 0;
+    // 本次触摸手势滚过列表 → 结束时不再翻页（同"一段手势一个动作"）
+    let touchScrolled = false;
     const onTouchStart = (e: TouchEvent) => {
       startY = e.touches[0].clientY;
+      touchScrolled = false;
     };
     const onTouchMove = (e: TouchEvent) => {
       const dy = startY - e.touches[0].clientY;
       if (Math.abs(dy) < 6) return;
       if (canScroll() && (dy > 0 ? !atBottom() : !atTop())) {
+        touchScrolled = true;
         e.stopPropagation(); // 让原生滚动接管，别被拨码轮 preventDefault 掐掉
       }
     };
     const onTouchEnd = (e: TouchEvent) => {
       const dy = startY - (e.changedTouches[0]?.clientY ?? startY);
+      if (touchScrolled) {
+        e.stopPropagation(); // 这次手势归列表：既不翻页，也不让拨码轮翻屏
+        return;
+      }
       if (Math.abs(dy) < 50) return;
-      if (claim(dy)) e.stopPropagation();
+      const next = indexRef.current + (dy > 0 ? 1 : -1);
+      if (next < 0 || next >= PAGES.length) return; // 首/末页边缘 → 放行给拨码轮
+      if (Date.now() < lockRef.current) {
+        e.stopPropagation(); // 吸收连击余波
+        return;
+      }
+      lockRef.current = Date.now() + 700;
+      goTo(next);
+      e.stopPropagation();
     };
 
-    el.addEventListener('wheel', onWheel, { passive: false });
+    // wheel 挂整块（标题/分页点上的滚轮也算这块的），touch 只挂列表：
+    // 触摸滚动的默认目标是手指下的元素，挂在整块上会让"在标题上划"变成死区
+    root.addEventListener('wheel', onWheel, { passive: false });
     el.addEventListener('touchstart', onTouchStart, { passive: true });
     el.addEventListener('touchmove', onTouchMove, { passive: false });
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
-      el.removeEventListener('wheel', onWheel);
+      root.removeEventListener('wheel', onWheel);
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onTouchEnd);
