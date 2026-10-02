@@ -20,8 +20,9 @@ function rig() {
     /** 推进 ms 毫秒，然后喂一个 delta */
     feed(deltaPx, ms = 16) {
       t += ms;
-      const state = g.beginEvent();
-      return { ...state, step: g.takeStep(deltaPx) };
+      const e = { deltaY: deltaPx, deltaMode: 0, deltaX: 0 };
+      const state = g.beginEvent(e);
+      return { ...state, step: state.absorbing ? 0 : g.takeStep(deltaPx) };
     },
     advance(ms) {
       t += ms;
@@ -85,8 +86,10 @@ describe('一段手势最多推进一格', () => {
 
   test('惯性尾巴里的一次小卡顿（≤latchMs）仍然被吸收', () => {
     const r = rig();
-    assert.equal(r.feed(BIG).step, 1);
-    const e = r.feed(BIG, WHEEL_GESTURE.latchMs - 15);
+    assert.equal(r.feed(T * 2).step, 1);
+    // 位移要留在"流"档内（低于鼠标格下限），否则它本来就该算一格
+    const e = r.feed(T * 0.75, WHEEL_GESTURE.latchMs - 15);
+    assert.equal(e.notch, false);
     assert.equal(e.absorbing, true);
     assert.equal(e.step, 0);
   });
@@ -159,6 +162,46 @@ describe('内容自己滚的手势不翻页', () => {
   });
 });
 
+describe('余波里认得出"用户又推了一把"（连续推不该被尾巴吃掉）', () => {
+  test('余波里重新加速 → 允许再走一格', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1); // 第一推
+    for (let i = 0; i < 10; i++) r.feed(50 * Math.exp(-i / 3), 16); // 惯性尾巴（单调衰减）
+    r.advance(40);
+    const again = r.feed(BIG * 1.2, 16); // 又推了一把：位移跳上去
+    assert.equal(again.absorbing, false, '认出新推力，不能再当余波吸收');
+    assert.equal(again.step, 1);
+  });
+
+  test('从静止起手（逐发加速）也能被认出来', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    for (let i = 0; i < 10; i++) r.feed(50 * Math.exp(-i / 3), 16);
+    r.advance(40);
+    let stepped = 0;
+    for (const d of [6, 9, 14, 22, 30, 38, 44]) stepped += r.feed(d, 16).step;
+    assert.equal(stepped, 1, '慢起手也该在余波里再走一格');
+  });
+
+  test('纯衰减余波不会被误判成新推力（不外溢）', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    let stepped = 0;
+    for (let i = 0; i < 60; i++) stepped += r.feed(Math.max(2, 50 * Math.exp(-i / 20)), 16).step;
+    assert.equal(stepped, 0);
+  });
+
+  test('中途停手再推 → 每推各走一格', () => {
+    const r = rig();
+    let stepped = 0;
+    for (let seg = 0; seg < 3; seg++) {
+      for (let k = 0; k < 4; k++) stepped += r.feed(T * 0.6, 12).step;
+      r.feed(0, 150); // 手指抬起换一口气（>latchMs，也 >minStepGapMs）
+    }
+    assert.equal(stepped, 3);
+  });
+});
+
 describe('高分辨率滚轮：一格被拆成多帧也要能走（"划不动"的来源之一）', () => {
   test('8×8px（共 64px）分帧上报 = 一格，可以走', () => {
     const r = rig();
@@ -197,8 +240,7 @@ describe('鼠标滚轮：一格就是一格（PC 要跟手）', () => {
     assert.equal(e.step, 1);
   });
 
-  test('小鼠标格（刚过鼠标格下限，仍低于连续流阈值）也要走一格', () => {
-    assert.ok(WHEEL_GESTURE.notchMinPx < WHEEL_GESTURE.triggerPx, '前提：这个位移低于连续流阈值');
+  test('小鼠标格（鼠标格下限）也要走一格', () => {
     const r = mrig();
     assert.equal(r.wheel(WHEEL_GESTURE.notchMinPx).step, 1);
   });
@@ -250,14 +292,15 @@ describe('鼠标滚轮：一格就是一格（PC 要跟手）', () => {
 
   test('触控板慢速细腻流不会被误认成鼠标格，且照旧累积到阈值走一格', () => {
     assert.ok(20 < WHEEL_GESTURE.notchMinPx, '前提：单发位移低于鼠标格下限');
-    const r = mrig();
+    assert.ok(20 < WHEEL_GESTURE.triggerPx, '前提：单发也要低于连续流阈值');
+    const r = rig();
     let stepped = 0;
     for (let i = 0; i < 6; i++) {
-      const e = r.wheel(20, 60); // 慢拖：间隔够久，但位移很小
+      const e = r.feed(20, 40); // 慢慢拖着走：位移很小、速率也不快
       assert.equal(e.notch, false);
       stepped += e.step;
     }
-    assert.equal(stepped, 1, '6 × 20px 累积过阈值，只走一格');
+    assert.equal(stepped, 1, '一直推着走 = 一格（松手再推才换下一格）');
   });
 });
 
