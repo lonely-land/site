@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx } from '@/lib/wheel-gesture.mjs';
+import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
@@ -34,6 +34,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const touchStartTime = useRef(0);
+  const touchLockRef = useRef(0);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   // Landing 未就绪时锁定滚动，防止黑屏切换
   const landingReadyRef = useRef(false);
@@ -260,6 +261,11 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 只处理纵向滑动（deltaY 须占主导且足够长）
       if (Math.abs(deltaY) < 50 || Math.abs(deltaY) < Math.abs(deltaX)) return;
       if (elapsed > 800) return;
+
+      // 与滚轮同一套"顿"的手感：一次滑动一格，翻过之后要停一下再滑
+      // （连续快滑常是两个 touchend 紧挨着来，不加锁就会连跳两屏）
+      if (Date.now() < touchLockRef.current) return;
+      touchLockRef.current = Date.now() + WHEEL_GESTURE.stepCooldownMs;
 
       if (deltaY > 0) {
         goToSectionRef.current(currentIndex.current + 1);
