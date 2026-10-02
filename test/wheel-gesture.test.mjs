@@ -67,25 +67,60 @@ describe('一段手势最多推进一格', () => {
     }
   });
 
-  test('惯性尾巴 + 掉帧（>idleMs 空档）仍在冷却窗口内 → 继续吸收', () => {
+  test('惯性尾巴持续期间（密集事件）一直吸收，时间再久也不漏', () => {
     const r = rig();
     assert.equal(r.feed(BIG).step, 1);
-    const e = r.feed(T * 0.7, WHEEL_GESTURE.idleMs + 100); // 掉帧超过 idleMs
-    assert.equal(e.fresh, true);
-    assert.equal(e.absorbing, true, '冷却窗口内即使被判成新手势也必须吸收');
+    let last = null;
+    for (let i = 0; i < 100; i++) last = r.feed(T * 0.7, 16); // 1.6s 的尾巴
+    assert.equal(last.step, 0);
+    assert.equal(last.absorbing, true);
+  });
+
+  test('慢推中间抖一下（>latchMs）不丢已累积的距离', () => {
+    const r = rig();
+    assert.equal(r.feed(T * 0.5).step, 0);
+    const jumpy = r.feed(T * 0.5, WHEEL_GESTURE.latchMs + 40); // 抖了一下，但还在 idleMs 内
+    assert.equal(jumpy.step, 1, '累积距离要跨过这次抖动');
+  });
+
+  test('惯性尾巴里的一次小卡顿（≤latchMs）仍然被吸收', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    const e = r.feed(BIG, WHEEL_GESTURE.latchMs - 15);
+    assert.equal(e.absorbing, true);
     assert.equal(e.step, 0);
   });
 
-  test('冷却窗口过后、事件也停了 → 新手势可以再推进一格', () => {
+  test('离散输入按人手节奏来（格间 260ms）→ 每格走一格，不被上一格的余波吃掉', () => {
     const r = rig();
-    assert.equal(r.feed(BIG).step, 1);
-    const e = r.feed(BIG, WHEEL_GESTURE.stepCooldownMs + WHEEL_GESTURE.idleMs + 50);
-    assert.equal(e.fresh, true);
-    assert.equal(e.absorbing, false);
-    assert.equal(e.step, 1);
+    let steps = 0;
+    for (let i = 0; i < 3; i++) {
+      // 每一"格"是分帧上报的 8×8px（共 64px），格与格之间停 260ms
+      for (let k = 0; k < 8; k++) steps += r.feed(8, 10).step;
+      if (i < 2) r.feed(0, 260 - 8 * 10);
+    }
+    assert.equal(steps, 3);
   });
 
-  test('冷却窗口过后但事件连续（手指没抬）→ 仍算同一段手势，不推进', () => {
+  test('停手超过 idleMs 就恢复响应（死区不再是固定 800ms）', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    const e = r.feed(BIG, WHEEL_GESTURE.idleMs + 60); // 420ms
+    assert.equal(e.fresh, true);
+    assert.equal(e.absorbing, false);
+    assert.equal(e.step, 1, '停下来就该能接着走，不该干等 800ms');
+  });
+
+  test('防抖下限：停手后立刻再起手，至少隔 minStepGapMs 才再走一格', () => {
+    const r = rig();
+    assert.equal(r.feed(BIG).step, 1);
+    const tooSoon = r.feed(BIG, WHEEL_GESTURE.minStepGapMs - 40); // 260ms：够不上新窗口但又太近
+    assert.equal(tooSoon.step, 0);
+    r.advance(WHEEL_GESTURE.idleMs);
+    assert.equal(r.feed(BIG).step, 1);
+  });
+
+  test('流仍在继续（手指没抬）→ 仍算同一段手势，不推进', () => {
     const r = rig();
     assert.equal(r.feed(BIG).step, 1);
     let last = null;
@@ -124,6 +159,20 @@ describe('内容自己滚的手势不翻页', () => {
   });
 });
 
+describe('高分辨率滚轮：一格被拆成多帧也要能走（"划不动"的来源之一）', () => {
+  test('8×8px（共 64px）分帧上报 = 一格，可以走', () => {
+    const r = rig();
+    let stepped = 0;
+    for (let i = 0; i < 8; i++) stepped += r.feed(8, 12).step;
+    assert.equal(stepped, 1);
+  });
+
+  test('太轻的一碰（8px 单发）仍然不动', () => {
+    const r = rig();
+    assert.equal(r.feed(8, 12).step, 0);
+  });
+});
+
 describe('鼠标滚轮：一格就是一格（PC 要跟手）', () => {
   /** 鼠标/触控板事件都带 deltaMode 的版本；gapMs = 与上一发的间隔 */
   function mrig() {
@@ -148,10 +197,10 @@ describe('鼠标滚轮：一格就是一格（PC 要跟手）', () => {
     assert.equal(e.step, 1);
   });
 
-  test('小鼠标格（53px，不到触控板阈值）也要走一格', () => {
-    assert.ok(53 < WHEEL_GESTURE.triggerPx, '前提：这个位移低于触控板阈值');
+  test('小鼠标格（刚过鼠标格下限，仍低于连续流阈值）也要走一格', () => {
+    assert.ok(WHEEL_GESTURE.notchMinPx < WHEEL_GESTURE.triggerPx, '前提：这个位移低于连续流阈值');
     const r = mrig();
-    assert.equal(r.wheel(53).step, 1);
+    assert.equal(r.wheel(WHEEL_GESTURE.notchMinPx).step, 1);
   });
 
   test('向上滚是 -1', () => {

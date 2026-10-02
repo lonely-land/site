@@ -77,11 +77,12 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
         // 短暂冷却，防止触摸/键盘连触发
         setTimeout(() => {
           isAnimating.current = false;
-          // 动画期间攒下的鼠标格：一格一次动画，接着往下走
+          // 动画期间攒下的格：一次只兑现一格（连点三下 = 连着翻三屏，
+          // 而不是一次跳过中间那屏）
           const queued = pendingStepRef.current;
           if (queued !== 0 && !document.querySelector('[data-slot-lightbox]')) {
-            pendingStepRef.current = 0;
-            goToSectionRef.current(currentIndex.current + queued);
+            pendingStepRef.current = queued > 0 ? queued - 1 : queued + 1;
+            goToSectionRef.current(currentIndex.current + (queued > 0 ? 1 : -1));
           }
         }, 100);
       },
@@ -221,8 +222,9 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       const step = notch ? gesture.takeNotchStep(wheelDeltaPx(e)) : gesture.takeStep(wheelDeltaPx(e));
       if (step === 0) return;
       if (isAnimating.current) {
-        // 动画期间不丢鼠标点击，排队（一格一次动画，连点几下就连着走几屏）
-        if (notch) pendingStepRef.current = step;
+        // 动画期间别把用户的意图丢掉：排队，一格一次动画（连点几下就连着走几屏）。
+        // 一段连续流最多只会产生一格，所以排队不会把"用力一划"变成两屏。
+        pendingStepRef.current = Math.max(-3, Math.min(3, pendingStepRef.current + step));
         return;
       }
 
@@ -280,7 +282,7 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 与滚轮同一套"顿"的手感：一次滑动一格，翻过之后要停一下再滑
       // （连续快滑常是两个 touchend 紧挨着来，不加锁就会连跳两屏）
       if (Date.now() < touchLockRef.current) return;
-      touchLockRef.current = Date.now() + WHEEL_GESTURE.stepCooldownMs;
+      touchLockRef.current = Date.now() + WHEEL_GESTURE.touchLockMs;
 
       if (deltaY > 0) {
         goToSectionRef.current(currentIndex.current + 1);

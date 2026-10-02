@@ -161,9 +161,9 @@ export default function About() {
         setIndex(next);
         const queued = pendingPageRef.current;
         if (queued !== 0) {
-          pendingPageRef.current = 0;
-          const after = next + queued;
-          if (after >= 0 && after < total) goTo(after);
+          // 一次只兑现一格：连点三下 = 连着翻三页（不是一次跳到末页）
+          pendingPageRef.current = queued > 0 ? queued - 1 : queued + 1;
+          goTo(next + (queued > 0 ? 1 : -1));
         }
       };
 
@@ -334,8 +334,8 @@ export default function About() {
         return false;
       }
       if (busyRef.current) {
-        // 翻页动画很短（0.16s），鼠标连点先攒着，别把点击丢掉
-        if (notch) pendingPageRef.current = step;
+        // 翻页动画很短（0.16s），先攒着，别把用户的意图丢掉
+        pendingPageRef.current = Math.max(-3, Math.min(3, pendingPageRef.current + step));
         return true;
       }
       goTo(next);
@@ -382,7 +382,7 @@ export default function About() {
         e.stopPropagation(); // 吸收连击余波
         return;
       }
-      lockRef.current = Date.now() + WHEEL_GESTURE.stepCooldownMs;
+      lockRef.current = Date.now() + WHEEL_GESTURE.touchLockMs;
       goTo(next);
       e.stopPropagation();
     };
