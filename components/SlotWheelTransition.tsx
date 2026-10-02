@@ -35,6 +35,8 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const touchStartX = useRef(0);
   const touchStartTime = useRef(0);
   const touchLockRef = useRef(0);
+  /** 动画期间攒下的鼠标格（+1/-1），动画结束接着走 */
+  const pendingStepRef = useRef(0);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   // Landing 未就绪时锁定滚动，防止黑屏切换
   const landingReadyRef = useRef(false);
@@ -75,6 +77,12 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
         // 短暂冷却，防止触摸/键盘连触发
         setTimeout(() => {
           isAnimating.current = false;
+          // 动画期间攒下的鼠标格：一格一次动画，接着往下走
+          const queued = pendingStepRef.current;
+          if (queued !== 0 && !document.querySelector('[data-slot-lightbox]')) {
+            pendingStepRef.current = 0;
+            goToSectionRef.current(currentIndex.current + queued);
+          }
         }, 100);
       },
     });
@@ -205,11 +213,18 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 注意：动画中也要把事件喂进手势（beginEvent 负责续期"同一段手势"），
       // 否则惯性尾巴会被误判成"新手势"，动画一结束就又跳一格
       // —— 这正是"用力猛一点就划过头"的来源
-      const { absorbing } = gesture.beginEvent();
+      const { absorbing, notch } = gesture.beginEvent(e);
       if (absorbing) return;
-      const step = gesture.takeStep(wheelDeltaPx(e));
+
+      // 鼠标滚轮是离散输入：一格走一格，不累积、不等待（"PC 上敏感一点"）；
+      // 触控板走原路：一段手势累积够 triggerPx 才走一格
+      const step = notch ? gesture.takeNotchStep(wheelDeltaPx(e)) : gesture.takeStep(wheelDeltaPx(e));
       if (step === 0) return;
-      if (isAnimating.current) return;
+      if (isAnimating.current) {
+        // 动画期间不丢鼠标点击，排队（一格一次动画，连点几下就连着走几屏）
+        if (notch) pendingStepRef.current = step;
+        return;
+      }
 
       goToSectionRef.current(currentIndex.current + step);
     };

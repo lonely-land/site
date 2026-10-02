@@ -137,6 +137,8 @@ export default function About() {
   const indexRef = useRef(0);
   const lockRef = useRef(0);
   const busyRef = useRef(false);
+  /** 翻页动画期间攒下的鼠标格（+1/-1），动画结束接着翻 */
+  const pendingPageRef = useRef(0);
   /** 滚轮手势状态：跨页延续（见下面 wheel effect 的说明） */
   const gestureRef = useRef<WheelGesture | null>(null);
   const playedRef = useRef(false);
@@ -157,6 +159,12 @@ export default function About() {
         busyRef.current = false;
         indexRef.current = next;
         setIndex(next);
+        const queued = pendingPageRef.current;
+        if (queued !== 0) {
+          pendingPageRef.current = 0;
+          const after = next + queued;
+          if (after >= 0 && after < total) goTo(after);
+        }
       };
 
       if (busyRef.current) return;
@@ -296,7 +304,7 @@ export default function About() {
     const claimWheel = (e: WheelEvent): boolean => {
       const deltaPx = wheelDeltaPx(e);
       // 每个事件都要过一遍状态机：它负责续期"同一段手势"（被吸收的事件也算）
-      const { fresh, absorbing } = gesture.beginEvent();
+      const { fresh, absorbing, notch } = gesture.beginEvent(e);
       if (fresh) yieldedToWheel = false;
 
       // 这段手势已经翻过一页：余波连原生滚动都不许 —— 否则翻过去的新页面
@@ -317,12 +325,18 @@ export default function About() {
         return true;
       }
 
-      const step = gesture.takeStep(deltaPx);
+      // 鼠标一格走一格（离散点击，不受触控板阈值/静默期约束）
+      const step = notch ? gesture.takeNotchStep(deltaPx) : gesture.takeStep(deltaPx);
       if (step === 0) return true; // 未到阈值 or 同一段手势的余波 → 吃掉，不外传
       const next = indexRef.current + step;
       if (next < 0 || next >= PAGES.length) {
         yieldedToWheel = true; // 首/末页边缘 → 整段手势让给拨码轮
         return false;
+      }
+      if (busyRef.current) {
+        // 翻页动画很短（0.16s），鼠标连点先攒着，别把点击丢掉
+        if (notch) pendingPageRef.current = step;
+        return true;
       }
       goTo(next);
       return true;

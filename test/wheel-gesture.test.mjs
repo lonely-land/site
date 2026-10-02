@@ -124,6 +124,94 @@ describe('内容自己滚的手势不翻页', () => {
   });
 });
 
+describe('鼠标滚轮：一格就是一格（PC 要跟手）', () => {
+  /** 鼠标/触控板事件都带 deltaMode 的版本；gapMs = 与上一发的间隔 */
+  function mrig() {
+    let t = 0;
+    const g = createWheelGesture(() => t);
+    return {
+      g,
+      wheel(deltaY, gapMs = 120, deltaMode = 0) {
+        t += gapMs;
+        const e = { deltaY, deltaMode, deltaX: 0 };
+        const state = g.beginEvent(e);
+        // 组件里的写法：absorbing 直接 return，否则走 takeNotchStep
+        return { ...state, px: wheelDeltaPx(e), step: state.absorbing ? 0 : g.takeNotchStep(wheelDeltaPx(e)) };
+      },
+    };
+  }
+
+  test('鼠标一格（100px）走一格', () => {
+    const r = mrig();
+    const e = r.wheel(100);
+    assert.equal(e.notch, true);
+    assert.equal(e.step, 1);
+  });
+
+  test('小鼠标格（53px，不到触控板阈值）也要走一格', () => {
+    assert.ok(53 < WHEEL_GESTURE.triggerPx, '前提：这个位移低于触控板阈值');
+    const r = mrig();
+    assert.equal(r.wheel(53).step, 1);
+  });
+
+  test('向上滚是 -1', () => {
+    const r = mrig();
+    assert.equal(r.wheel(-100).step, -1);
+  });
+
+  test('Firefox 行模式一格（deltaMode=1, deltaY=3）走一格', () => {
+    const r = mrig();
+    const e = r.wheel(3, 120, 1);
+    assert.equal(e.notch, true);
+    assert.equal(e.step, 1);
+  });
+
+  test('鼠标连点（间隔 > 去重窗）每一格都算', () => {
+    const r = mrig();
+    assert.equal(r.wheel(100).step, 1);
+    assert.equal(r.wheel(100, WHEEL_GESTURE.notchCooldownMs + 50).step, 1);
+    assert.equal(r.wheel(100, WHEEL_GESTURE.notchCooldownMs + 50).step, 1);
+  });
+
+  test('同一格被拆成多帧（16ms 内重复上报）只算一格', () => {
+    const r = mrig();
+    assert.equal(r.wheel(100).step, 1);
+    const dup = r.wheel(100, 16);
+    assert.equal(dup.notch, false, '密集事件不算鼠标格');
+    assert.equal(dup.step, 0, '去重窗内不重复推进');
+  });
+
+  test('鼠标格不被触控板的长静默期困住（翻完 200ms 再点也要走）', () => {
+    const r = mrig();
+    assert.equal(r.wheel(BIG * 3, 1000).step, 1); // 触控板式一大团（间隔够久 → 其实算鼠标格）
+    const e = r.wheel(100, 200); // 远早于 stepCooldownMs
+    assert.equal(e.step, 1, '鼠标点击不该等 800ms');
+  });
+
+  test('鼠标格之后，触控板式密集余波仍被吸收', () => {
+    const r = mrig();
+    assert.equal(r.wheel(100).step, 1);
+    for (let i = 0; i < 10; i++) {
+      const e = r.wheel(BIG, 16);
+      assert.equal(e.notch, false);
+      assert.equal(e.step, 0, '余波不该再推进');
+      assert.equal(e.absorbing, true);
+    }
+  });
+
+  test('触控板慢速细腻流不会被误认成鼠标格，且照旧累积到阈值走一格', () => {
+    assert.ok(20 < WHEEL_GESTURE.notchMinPx, '前提：单发位移低于鼠标格下限');
+    const r = mrig();
+    let stepped = 0;
+    for (let i = 0; i < 6; i++) {
+      const e = r.wheel(20, 60); // 慢拖：间隔够久，但位移很小
+      assert.equal(e.notch, false);
+      stepped += e.step;
+    }
+    assert.equal(stepped, 1, '6 × 20px 累积过阈值，只走一格');
+  });
+});
+
 describe('wheelDeltaPx：deltaMode 折算', () => {
   test('像素模式原样', () => {
     assert.equal(wheelDeltaPx({ deltaY: 100, deltaMode: 0 }), 100);
