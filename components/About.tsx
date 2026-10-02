@@ -6,7 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import styles from './About.module.css';
 import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx, type WheelGesture } from '@/lib/wheel-gesture.mjs';
+import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE, type WheelGesture } from '@/lib/wheel-gesture.mjs';
 
 /**
  * About：分页器（3 页：Music / Anime / Games）
@@ -368,7 +368,7 @@ export default function About() {
         e.stopPropagation(); // 吸收连击余波
         return;
       }
-      lockRef.current = Date.now() + 700;
+      lockRef.current = Date.now() + WHEEL_GESTURE.stepCooldownMs;
       goTo(next);
       e.stopPropagation();
     };
