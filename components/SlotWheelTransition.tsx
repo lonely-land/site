@@ -3,6 +3,8 @@
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
+import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
+import WheelFeelTuner from './WheelFeelTuner';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
@@ -19,6 +21,9 @@ interface SlotWheelTransitionProps {
  *
  * 触发：wheel / touch / keyboard，scroll-snap 锁定每个 Block
  *
+ * wheel 的归属见 lib/wheel-gesture：一段手势（含触控板惯性尾巴）最多推进
+ * 一格，避免"用力猛一点就跳过一整屏"。
+ *
  * 动效说明：这里的 0.08 / 0.1 / 0.18s 是刻意为之的"机械感"编排
  * （蓄力→释放→过冲回弹），不走通用 token；与 token 等值的 0.4s 用 DURATION.base。
  */
@@ -27,10 +32,31 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const currentIndex = useRef(0);
   const isAnimating = useRef(false);
-  const wheelLockRef = useRef(0);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const touchStartTime = useRef(0);
+  const touchLockRef = useRef(0);
+  /** 动画期间攒下的鼠标格（+1/-1），动画结束接着走 */
+  const pendingStepRef = useRef(0);
+  /** 这一屏"站住"的截止时刻（只约束滚轮的排队节奏，不拦键盘/触摸） */
+  const dwellUntilRef = useRef(0);
+  const dwellTimerRef = useRef<number | null>(null);
+  const drainQueueRef = useRef<() => void>(() => {});
+  /** 排队之后必须补排兑现定时器：dwell 期内排进来的意图否则会永久卡住 */
+  const armDrain = () => {
+    if (dwellTimerRef.current) return;
+    const wait = dwellUntilRef.current - Date.now();
+    if (wait <= 0) {
+      // 还在动画里排队：dwellUntil 要等动画结束才设，那时会自动补排，这里别空转
+      if (isAnimating.current) return;
+      drainQueueRef.current();
+      return;
+    }
+    dwellTimerRef.current = window.setTimeout(() => {
+      dwellTimerRef.current = null;
+      drainQueueRef.current();
+    }, wait);
+  };
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   // Landing 未就绪时锁定滚动，防止黑屏切换
   const landingReadyRef = useRef(false);
@@ -68,10 +94,11 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       onComplete: () => {
         currentIndex.current = targetIndex;
         setActiveIndex(targetIndex);
-        // 短暂冷却，防止触摸/键盘连触发
-        setTimeout(() => {
-          isAnimating.current = false;
-        }, 100);
+        // 立刻解锁：键盘/触摸是"有意为之"的离散动作，不该被这 320ms 拦住。
+        // 这 320ms 只用来让滚轮排队 —— 快滚时中间那屏也要看得见。
+        isAnimating.current = false;
+        dwellUntilRef.current = Date.now() + WHEEL_GESTURE.blockDwellMs;
+        if (pendingStepRef.current !== 0) armDrain();
       },
     });
     timelineRef.current = tl;
@@ -154,6 +181,22 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const goToSectionRef = useRef(goToSection);
   goToSectionRef.current = goToSection;
 
+  /** 排队的一格一格兑现（一次一屏，不跳屏） */
+  drainQueueRef.current = () => {
+    const queued = pendingStepRef.current;
+    if (queued === 0) return;
+    // 动画还没结束：**不能消费这一格**（否则用户的意图被吞），等动画结束时自动补排
+    if (isAnimating.current) return;
+    const dir = queued > 0 ? 1 : -1;
+    const target = currentIndex.current + dir;
+    if (target < 0 || target >= totalBlocks || document.querySelector('[data-slot-lightbox]')) {
+      pendingStepRef.current = 0;
+      return;
+    }
+    pendingStepRef.current = queued > 0 ? queued - 1 : queued + 1;
+    goToSectionRef.current(target);
+  };
+
   // ---- 初始化位置 ----
   // 用 useLayoutEffect 在首次绘制前定位，配合 CSS visibility:hidden 防止闪烁
   // 必须显式设 y:0 清除像素位移，否则 GSAP 可能残留 y 像素值导致双重位移
@@ -183,10 +226,13 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
     const container = containerRef.current;
     if (!container) return;
 
+    // 一段手势最多推进一格：惯性尾巴（同一段手势）只吸收、不再触发
+    const gesture = createWheelGesture();
+
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      // 灯箱打开时不处理
+      // 灯箱打开时不做任何处理
       if (document.querySelector('[data-slot-lightbox]')) return;
 
       // Landing 未就绪时禁止切换（防止黑屏）
@@ -195,20 +241,29 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // Gallery 自行处理横向滚动并 stopPropagation，
       // 到达此处的事件来自非 Gallery 区域或 Gallery 已到边缘 → 切换 section
 
-      // wheel lock 期间忽略（吸收触控板惯性）
-      if (Date.now() < wheelLockRef.current) return;
-      if (isAnimating.current) return;
+      // 注意：动画中也要把事件喂进手势（beginEvent 负责续期"同一段手势"），
+      // 否则惯性尾巴会被误判成"新手势"，动画一结束就又跳一格
+      // —— 这正是"用力猛一点就划过头"的来源
+      const { absorbing, notch } = gesture.beginEvent(e);
+      if (absorbing) return;
 
-      // 首次有效滚动立即触发，不累积 delta
-      if (Math.abs(e.deltaY) > 5) {
-        if (e.deltaY > 0) {
-          goToSectionRef.current(currentIndex.current + 1);
-        } else {
-          goToSectionRef.current(currentIndex.current - 1);
-        }
-        // 锁定 900ms 吸收触控板惯性余波
-        wheelLockRef.current = Date.now() + 900;
+      // 鼠标滚轮是离散输入：一格走一格，不累积、不等待（"PC 上敏感一点"）；
+      // 触控板走原路：一段手势累积够 triggerPx 才走一格
+      const step = notch ? gesture.takeNotchStep(wheelDeltaPx(e)) : gesture.takeStep(wheelDeltaPx(e));
+      if (step === 0) return;
+      if (isAnimating.current || Date.now() < dwellUntilRef.current) {
+        // 动画中/刚换完屏：别把用户的意图丢掉，排队，一格一次动画。
+        // 离散鼠标格可以连排 3 格（快滚就是要连着走）；**连续流最多排 1 格** ——
+        // 否则一次甩动的余波会绕过中间那块的规则直接冲过去
+        // （用户要求：显示哪块，就以哪块的规则为准，而不是几块同时生效）。
+        const cap = notch ? 3 : 1;
+        const next = pendingStepRef.current + step;
+        pendingStepRef.current = Math.sign(next) === Math.sign(step) ? Math.max(-cap, Math.min(cap, next)) : step;
+        armDrain();
+        return;
       }
+
+      goToSectionRef.current(currentIndex.current + step);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
@@ -258,6 +313,11 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 只处理纵向滑动（deltaY 须占主导且足够长）
       if (Math.abs(deltaY) < 50 || Math.abs(deltaY) < Math.abs(deltaX)) return;
       if (elapsed > 800) return;
+
+      // 与滚轮同一套"顿"的手感：一次滑动一格，翻过之后要停一下再滑
+      // （连续快滑常是两个 touchend 紧挨着来，不加锁就会连跳两屏）
+      if (Date.now() < touchLockRef.current) return;
+      touchLockRef.current = Date.now() + WHEEL_GESTURE.touchLockMs;
 
       if (deltaY > 0) {
         goToSectionRef.current(currentIndex.current + 1);
@@ -336,6 +396,8 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
           {block}
         </div>
       ))}
+      {/* 只在 ?feel=1 时渲染：手感调参面板 */}
+      <WheelFeelTuner />
     </div>
   );
 }

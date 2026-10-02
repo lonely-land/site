@@ -6,8 +6,9 @@
    - 排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token
    - 图片统一「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
 
-   版式比例取自 Figma「Profile」：歌手方格 4 列、番剧行缩略图 148×198、
-   游戏行图标 105×105、行底图统一 85% 压暗（--scrim-card 0.86）。 */
+   版式比例取自 Figma「Profile」并在此基础上提密度：歌手方格 6 列、番剧行
+   缩略图 148×198（桌面 110 宽封顶）、游戏行图标 1:1（桌面 76 宽封顶）、
+   番剧/游戏桌面各 3 列、行底图统一 85% 压暗（--scrim-card 0.86）。 */
 
 .about {
   display: flex;
@@ -256,11 +257,11 @@
   white-space: nowrap;
 }
 
-/* ---- 番剧 / 游戏：底图横条 ---- */
+/* ---- 番剧 / 游戏：底图横条（桌面 3 列，进一步提密度） ---- */
 .rows {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 22px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 16px);
   margin: auto 0;
   padding: 0;
   list-style: none;
@@ -269,9 +270,11 @@
 .row {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: clamp(16px, 2.3vw, 33px);
-  padding: clamp(10px, 1.2vw, 17px) clamp(14px, 2vw, 28px) clamp(10px, 1.2vw, 17px)
+  /* 整行内容垂直居中：缩略图（146）比文字块（~85）高，顶对齐会让正文悬在
+     卡片上半部、下半部空一截（用户反馈「内容需居中于卡片中心」） */
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 20px);
+  padding: clamp(9px, 0.9vw, 13px) clamp(12px, 1.6vw, 22px) clamp(9px, 0.9vw, 13px)
     clamp(8px, 0.9vw, 13px);
   border-radius: var(--radius-card);
   overflow: hidden;
@@ -310,7 +313,7 @@
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: clamp(84px, 8.5vw, 132px);
+  width: clamp(72px, 7.6vw, 110px);
   aspect-ratio: 148 / 198;
 }
 
@@ -320,15 +323,16 @@
   min-width: 0;
   /* 行是整屏宽的，正文限一下行宽，别拉成一整行 */
   max-width: 68ch;
-  padding-top: clamp(2px, 0.7vw, 10px);
 }
 
-/* 与 Friends 的 cardName / cardDesc 同一组字体角色与字重 */
+/* 与 Friends 的 cardName / cardDesc 同一组字体角色与字重；
+   字号比 Friends 低一档：三列卡片正文列只有 ~200px，再挂 h2 档（34px）会
+   一个字都排不下、还靠换行把行高撑起来 */
 .rowTitle {
   margin: 0;
   font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
   font-weight: 500;
-  font-size: var(--fs-h2);
+  font-size: var(--fs-body);
   line-height: 1.2;
   color: var(--text);
 }
@@ -336,27 +340,26 @@
 .rowDesc {
   margin: var(--space-2) 0 0;
   font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
-  font-size: var(--fs-body);
+  font-size: var(--fs-caption);
   font-weight: 400;
   line-height: 1.35;
   color: var(--text-dim);
+  /* 简介限 3 行：三列下正文变窄，不夹住的话每行会被撑得又高又长（窄屏放宽到 4 行） */
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* 游戏行：图标 105×105、整行更矮（设计稿 166 高） */
+/* 游戏行：图标更小、整行更矮（三列一行铺满）；垂直居中是基础规则 */
 [data-page='games'] .row {
-  align-items: center;
-  gap: clamp(12px, 1.5vw, 22px);
-  padding: clamp(12px, 2.1vw, 31px) clamp(14px, 2vw, 28px) clamp(12px, 2.1vw, 31px)
-    clamp(16px, 2.3vw, 33px);
+  gap: clamp(10px, 1.2vw, 16px);
+  padding: clamp(10px, 1.3vw, 17px) clamp(12px, 1.6vw, 20px);
 }
 
 [data-page='games'] .rowThumb {
-  width: clamp(64px, 6vw, 104px);
+  width: clamp(56px, 5.2vw, 76px);
   aspect-ratio: 1 / 1;
-}
-
-[data-page='games'] .rowText {
-  padding-top: 0;
 }
 
 /* ---- 窄屏 ---- */
@@ -380,7 +383,7 @@
     gap: var(--space-3);
   }
 
-  /* 窄屏番剧/游戏回到单列整宽 */
+  /* 窄屏番剧/游戏回到单列整宽（手机）；平板档见下面的 768–1023 覆写 */
   .rows {
     grid-template-columns: 1fr;
     gap: var(--space-3);
@@ -398,16 +401,29 @@
     width: clamp(56px, 17vw, 88px);
   }
 
-  .rowTitle {
-    font-size: var(--fs-body);
-  }
-
+  /* 行标题 / 简介的字号基础规则已经是这一档（--fs-body / --fs-caption），不用再覆写 */
   .rowDesc {
-    font-size: var(--fs-caption);
     -webkit-line-clamp: 4;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+}
+
+/* ---- 平板档（768–1023）：单列整宽会把番剧/游戏拉成 700–900px 宽的巨幅横条，
+   一屏只看得到 3–4 条；这一档回到两列并把缩略图收到桌面量级，
+   密度思路与桌面 3 列一致（手机 <768 仍保持单列整宽） ---- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rowThumb {
+    width: clamp(54px, 6.4vw, 64px);
+  }
+
+  .rowDesc {
+    -webkit-line-clamp: 3;
   }
 }
 
