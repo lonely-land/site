@@ -137,6 +137,25 @@ export default function About() {
   const indexRef = useRef(0);
   const lockRef = useRef(0);
   const busyRef = useRef(false);
+  /** 这一页"站住"的截止时刻（只约束滚轮排队，不拦点按/触摸） */
+  const dwellUntilRef = useRef(0);
+  const dwellTimerRef = useRef<number | null>(null);
+  const drainPagesRef = useRef<() => void>(() => {});
+  /** 排队之后必须补排兑现定时器：dwell 期内排进来的意图否则会永久卡住 */
+  const armDrain = () => {
+    if (dwellTimerRef.current) return;
+    const wait = dwellUntilRef.current - Date.now();
+    if (wait <= 0) {
+      // 还在翻页动画里排队：dwellUntil 要等翻页结束才设，那时会自动补排
+      if (busyRef.current) return;
+      drainPagesRef.current();
+      return;
+    }
+    dwellTimerRef.current = window.setTimeout(() => {
+      dwellTimerRef.current = null;
+      drainPagesRef.current();
+    }, wait);
+  };
   /** 翻页动画期间攒下的鼠标格（+1/-1），动画结束接着翻 */
   const pendingPageRef = useRef(0);
   /** 滚轮手势状态：跨页延续（见下面 wheel effect 的说明） */
@@ -158,21 +177,11 @@ export default function About() {
       const commit = () => {
         indexRef.current = next;
         setIndex(next);
-        const queued = pendingPageRef.current;
-        const dir = queued > 0 ? 1 : -1;
-        const target = next + dir;
-        if (queued !== 0 && target >= 0 && target < total) {
-          // 一次只兑现一格：连点三下 = 连着翻三页（不是一次跳到末页）；
-          // 每页先站住 pageDwellMs，快滚也看得清内容
-          pendingPageRef.current = queued > 0 ? queued - 1 : queued + 1;
-          setTimeout(() => {
-            busyRef.current = false;
-            goTo(target);
-          }, WHEEL_GESTURE.pageDwellMs);
-          return;
-        }
-        pendingPageRef.current = 0;
+        // 立刻解锁（点按/触摸是离散动作，不该被这 200ms 拦住）；
+        // 这 200ms 只让滚轮排队 —— 快滚连翻时每页也看得清
         busyRef.current = false;
+        dwellUntilRef.current = Date.now() + WHEEL_GESTURE.pageDwellMs;
+        if (pendingPageRef.current !== 0) armDrain();
       };
 
       if (busyRef.current) return;
@@ -194,6 +203,22 @@ export default function About() {
     },
     [total],
   );
+
+  /** 排队的一页一页兑现（一次一页，不跳页） */
+  drainPagesRef.current = () => {
+    const queued = pendingPageRef.current;
+    if (queued === 0) return;
+    // 翻页动画还没结束：**不能消费这一页**（否则用户的意图被吞）
+    if (busyRef.current) return;
+    const dir = queued > 0 ? 1 : -1;
+    const target = indexRef.current + dir;
+    if (target < 0 || target >= PAGES.length) {
+      pendingPageRef.current = 0;
+      return;
+    }
+    pendingPageRef.current = queued > 0 ? queued - 1 : queued + 1;
+    goTo(target);
+  };
 
   // 入场：拨码轮把这一屏翻上来（进入视口 20%）时才播
   // 编排：标题失焦转清晰 → 分页点淡入 → 条目逐条落位
@@ -341,9 +366,10 @@ export default function About() {
         yieldedToWheel = true; // 首/末页边缘 → 整段手势让给拨码轮
         return false;
       }
-      if (busyRef.current) {
+      if (busyRef.current || Date.now() < dwellUntilRef.current) {
         // 翻页动画很短（0.16s），先攒着，别把用户的意图丢掉
         pendingPageRef.current = Math.max(-3, Math.min(3, pendingPageRef.current + step));
+        armDrain();
         return true;
       }
       goTo(next);

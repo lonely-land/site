@@ -38,6 +38,25 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const touchLockRef = useRef(0);
   /** 动画期间攒下的鼠标格（+1/-1），动画结束接着走 */
   const pendingStepRef = useRef(0);
+  /** 这一屏"站住"的截止时刻（只约束滚轮的排队节奏，不拦键盘/触摸） */
+  const dwellUntilRef = useRef(0);
+  const dwellTimerRef = useRef<number | null>(null);
+  const drainQueueRef = useRef<() => void>(() => {});
+  /** 排队之后必须补排兑现定时器：dwell 期内排进来的意图否则会永久卡住 */
+  const armDrain = () => {
+    if (dwellTimerRef.current) return;
+    const wait = dwellUntilRef.current - Date.now();
+    if (wait <= 0) {
+      // 还在动画里排队：dwellUntil 要等动画结束才设，那时会自动补排，这里别空转
+      if (isAnimating.current) return;
+      drainQueueRef.current();
+      return;
+    }
+    dwellTimerRef.current = window.setTimeout(() => {
+      dwellTimerRef.current = null;
+      drainQueueRef.current();
+    }, wait);
+  };
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   // Landing 未就绪时锁定滚动，防止黑屏切换
   const landingReadyRef = useRef(false);
@@ -75,23 +94,11 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       onComplete: () => {
         currentIndex.current = targetIndex;
         setActiveIndex(targetIndex);
-        // 让这一屏先"站住"再走下一格：快滚时中间那屏也要看得见。
-        // 期间保持 isAnimating = true，新来的格继续排队（不会立刻把这一屏推走）。
-        setTimeout(() => {
-          // 动画期间攒下的格：一次只兑现一格（连点三下 = 连着翻三屏，
-          // 而不是一次跳过中间那屏）
-          const queued = pendingStepRef.current;
-          const dir = queued > 0 ? 1 : -1;
-          const target = currentIndex.current + dir;
-          if (queued !== 0 && !document.querySelector('[data-slot-lightbox]') && target >= 0 && target < totalBlocks) {
-            pendingStepRef.current = queued > 0 ? queued - 1 : queued + 1;
-            isAnimating.current = false; // 放行 goToSection（它会立刻再置 true）
-            goToSectionRef.current(target);
-            return;
-          }
-          pendingStepRef.current = 0;
-          isAnimating.current = false;
-        }, WHEEL_GESTURE.blockDwellMs);
+        // 立刻解锁：键盘/触摸是"有意为之"的离散动作，不该被这 320ms 拦住。
+        // 这 320ms 只用来让滚轮排队 —— 快滚时中间那屏也要看得见。
+        isAnimating.current = false;
+        dwellUntilRef.current = Date.now() + WHEEL_GESTURE.blockDwellMs;
+        if (pendingStepRef.current !== 0) armDrain();
       },
     });
     timelineRef.current = tl;
@@ -174,6 +181,22 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
   const goToSectionRef = useRef(goToSection);
   goToSectionRef.current = goToSection;
 
+  /** 排队的一格一格兑现（一次一屏，不跳屏） */
+  drainQueueRef.current = () => {
+    const queued = pendingStepRef.current;
+    if (queued === 0) return;
+    // 动画还没结束：**不能消费这一格**（否则用户的意图被吞），等动画结束时自动补排
+    if (isAnimating.current) return;
+    const dir = queued > 0 ? 1 : -1;
+    const target = currentIndex.current + dir;
+    if (target < 0 || target >= totalBlocks || document.querySelector('[data-slot-lightbox]')) {
+      pendingStepRef.current = 0;
+      return;
+    }
+    pendingStepRef.current = queued > 0 ? queued - 1 : queued + 1;
+    goToSectionRef.current(target);
+  };
+
   // ---- 初始化位置 ----
   // 用 useLayoutEffect 在首次绘制前定位，配合 CSS visibility:hidden 防止闪烁
   // 必须显式设 y:0 清除像素位移，否则 GSAP 可能残留 y 像素值导致双重位移
@@ -228,10 +251,15 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // 触控板走原路：一段手势累积够 triggerPx 才走一格
       const step = notch ? gesture.takeNotchStep(wheelDeltaPx(e)) : gesture.takeStep(wheelDeltaPx(e));
       if (step === 0) return;
-      if (isAnimating.current) {
-        // 动画期间别把用户的意图丢掉：排队，一格一次动画（连点几下就连着走几屏）。
-        // 一段连续流最多只会产生一格，所以排队不会把"用力一划"变成两屏。
-        pendingStepRef.current = Math.max(-3, Math.min(3, pendingStepRef.current + step));
+      if (isAnimating.current || Date.now() < dwellUntilRef.current) {
+        // 动画中/刚换完屏：别把用户的意图丢掉，排队，一格一次动画。
+        // 离散鼠标格可以连排 3 格（快滚就是要连着走）；**连续流最多排 1 格** ——
+        // 否则一次甩动的余波会绕过中间那块的规则直接冲过去
+        // （用户要求：显示哪块，就以哪块的规则为准，而不是几块同时生效）。
+        const cap = notch ? 3 : 1;
+        const next = pendingStepRef.current + step;
+        pendingStepRef.current = Math.sign(next) === Math.sign(step) ? Math.max(-cap, Math.min(cap, next)) : step;
+        armDrain();
         return;
       }
 

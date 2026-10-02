@@ -183,6 +183,31 @@ describe('余波里认得出"用户又推了一把"（连续推不该被尾巴�
     assert.equal(stepped, 1, '慢起手也该在余波里再走一格');
   });
 
+  test('惯性尾巴里夹着 60ms 合并帧（主线程忙）不再走第二格', () => {
+    const r = rig();
+    let stepped = 0;
+    // 甩出去 8 发 60px，然后尾巴：中间被合并成一大跳（60~90ms 间隔）
+    for (let i = 0; i < 8; i++) stepped += r.feed(60, 8).step;
+    for (const [d, gap] of [[50, 70], [44, 60], [38, 80], [30, 65], [22, 70]]) stepped += r.feed(d, gap).step;
+    assert.equal(stepped, 1, '合并帧拉长的是同一段手势，不能读成第二格');
+  });
+
+  test('真的停手（>140ms）再推，能马上再来一格', () => {
+    const r = rig();
+    let stepped = 0;
+    stepped += r.feed(60, 8).step;   // 甩一格
+    stepped += r.feed(60, 8).step;   // 尾巴（吸收）
+    stepped += r.feed(60, 200).step; // 停手再推
+    assert.equal(stepped, 2);
+  });
+
+  test('一次用力甩（先加速后衰减）只走一格（爬升段不算新推力）', () => {
+    const r = rig();
+    let stepped = 0;
+    for (const d of [20, 35, 55, 70, 85, 70, 55, 40, 28, 18, 12, 8, 5, 3]) stepped += r.feed(d, 12).step;
+    assert.equal(stepped, 1, '一次甩动 = 一格，不能因为中途加速就多走');
+  });
+
   test('纯衰减余波不会被误判成新推力（不外溢）', () => {
     const r = rig();
     assert.equal(r.feed(BIG).step, 1);
