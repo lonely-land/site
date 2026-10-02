@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } fro
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
 import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
+import WheelFeelTuner from './WheelFeelTuner';
 import styles from './SlotWheelTransition.module.css';
 
 interface SlotWheelTransitionProps {
@@ -74,17 +75,23 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       onComplete: () => {
         currentIndex.current = targetIndex;
         setActiveIndex(targetIndex);
-        // 短暂冷却，防止触摸/键盘连触发
+        // 让这一屏先"站住"再走下一格：快滚时中间那屏也要看得见。
+        // 期间保持 isAnimating = true，新来的格继续排队（不会立刻把这一屏推走）。
         setTimeout(() => {
-          isAnimating.current = false;
           // 动画期间攒下的格：一次只兑现一格（连点三下 = 连着翻三屏，
           // 而不是一次跳过中间那屏）
           const queued = pendingStepRef.current;
-          if (queued !== 0 && !document.querySelector('[data-slot-lightbox]')) {
+          const dir = queued > 0 ? 1 : -1;
+          const target = currentIndex.current + dir;
+          if (queued !== 0 && !document.querySelector('[data-slot-lightbox]') && target >= 0 && target < totalBlocks) {
             pendingStepRef.current = queued > 0 ? queued - 1 : queued + 1;
-            goToSectionRef.current(currentIndex.current + (queued > 0 ? 1 : -1));
+            isAnimating.current = false; // 放行 goToSection（它会立刻再置 true）
+            goToSectionRef.current(target);
+            return;
           }
-        }, 100);
+          pendingStepRef.current = 0;
+          isAnimating.current = false;
+        }, WHEEL_GESTURE.blockDwellMs);
       },
     });
     timelineRef.current = tl;
@@ -361,6 +368,8 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
           {block}
         </div>
       ))}
+      {/* 只在 ?feel=1 时渲染：手感调参面板 */}
+      <WheelFeelTuner />
     </div>
   );
 }

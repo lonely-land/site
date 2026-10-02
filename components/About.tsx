@@ -156,15 +156,23 @@ export default function About() {
       if (next === indexRef.current) return;
 
       const commit = () => {
-        busyRef.current = false;
         indexRef.current = next;
         setIndex(next);
         const queued = pendingPageRef.current;
-        if (queued !== 0) {
-          // 一次只兑现一格：连点三下 = 连着翻三页（不是一次跳到末页）
+        const dir = queued > 0 ? 1 : -1;
+        const target = next + dir;
+        if (queued !== 0 && target >= 0 && target < total) {
+          // 一次只兑现一格：连点三下 = 连着翻三页（不是一次跳到末页）；
+          // 每页先站住 pageDwellMs，快滚也看得清内容
           pendingPageRef.current = queued > 0 ? queued - 1 : queued + 1;
-          goTo(next + (queued > 0 ? 1 : -1));
+          setTimeout(() => {
+            busyRef.current = false;
+            goTo(target);
+          }, WHEEL_GESTURE.pageDwellMs);
+          return;
         }
+        pendingPageRef.current = 0;
+        busyRef.current = false;
       };
 
       if (busyRef.current) return;

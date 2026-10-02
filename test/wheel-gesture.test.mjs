@@ -202,6 +202,29 @@ describe('余波里认得出"用户又推了一把"（连续推不该被尾巴�
   });
 });
 
+describe('鼠标格必须是"孤立事件"（主线程忙时合并出来的一帧不算格）', () => {
+  test('连续流之后紧跟的稀疏大位移仍算流（不被当成鼠标格翻屏）', () => {
+    const r = rig();
+    // 先建立"这是一段连续流"（60px 分两发、间隔 16ms）
+    assert.equal(r.feed(10, 16).step, 0);
+    assert.equal(r.feed(60, 16).step, 1);
+    // 尾巴被合并成 30ms 一发、每发 60px（≥鼠标格下限、间隔也 ≥notchGapMs）
+    const merged = r.feed(60, 30);
+    assert.equal(merged.notch, false, '紧跟在流后面的事件不该算鼠标格');
+    assert.equal(merged.absorbing, true);
+    assert.equal(merged.step, 0);
+  });
+
+  test('停够之后再来的稀疏大位移才算鼠标格', () => {
+    const r = rig();
+    assert.equal(r.feed(10, 16).step, 0);
+    assert.equal(r.feed(60, 16).step, 1);
+    r.feed(60, 30); // 流里的合并帧
+    const e = r.feed(100, 60); // 真的停手 60ms 后再来的孤立一格
+    assert.equal(e.notch, true, '停够之后的孤立大位移才算鼠标格');
+  });
+});
+
 describe('高分辨率滚轮：一格被拆成多帧也要能走（"划不动"的来源之一）', () => {
   test('8×8px（共 64px）分帧上报 = 一格，可以走', () => {
     const r = rig();
