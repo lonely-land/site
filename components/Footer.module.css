@@ -93,6 +93,52 @@
   pointer-events: none;
 }
 
+/* hover 填白层：塞在镂空大字里的第二层「Lonely」——父级怎么画（字号 / 描边 / paint-order）它就怎么画，
+   只把字填成白色；再用一条硬边 mask 当「移动的白色窗口」把它显影出来。
+   mask 渐变宽 200%（左半不透明、右半透明），mask-position-x 就是窗口的位置：
+     +100% 窗口在字左侧之外（填白层整体不可见 = 全镂空）→ 0% 正好盖满 → -100% 窗口在字右侧之外。
+   悬停 +100%→0%：白色硬边从左往右长出来；离开 0%→-100%：白边左缘继续往右走掉，
+   镂空从左边开始恢复 —— 一条窗口一个方向扫过去，进出都是「左往右」（阶段在 Footer.tsx 里切）。
+   mask 只在盒子内绘制，而字形会溢出 line box：先把盒子撑出去，再用等量 padding 把内容框压回原位，
+   字的位置和字号完全不受影响。 */
+.lonelyFill {
+  position: absolute;
+  inset: -0.4em -0.08em;
+  padding: 0.4em 0.08em;
+  color: var(--text);
+  --wipe-x: 100%;
+  -webkit-mask-image: linear-gradient(90deg, #000 0 50%, transparent 50% 100%);
+  mask-image: linear-gradient(90deg, #000 0 50%, transparent 50% 100%);
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--wipe-x) 0;
+  mask-position: var(--wipe-x) 0;
+  transition: -webkit-mask-position var(--dur-wipe) var(--ease-wipe),
+    mask-position var(--dur-wipe) var(--ease-wipe);
+}
+
+.lonelyFill[data-phase='in'] {
+  --wipe-x: 0%;
+}
+
+.lonelyFill[data-phase='out'] {
+  --wipe-x: -100%;
+}
+
+/* 扫出结束：白色已经完全在字的右侧之外，此刻瞬移回左侧待命。
+   两端都是全镂空，这个跳变看不见，所以关掉过渡 */
+.lonelyFill[data-phase='idle'] {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lonelyFill {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
   .footer {
     width: 100vw;
