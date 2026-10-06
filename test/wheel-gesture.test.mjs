@@ -162,25 +162,25 @@ describe('内容自己滚的手势不翻页', () => {
   });
 });
 
-describe('余波里认得出"用户又推了一把"（连续推不该被尾巴吃掉）', () => {
-  test('余波里重新加速 → 允许再走一格', () => {
+describe('一次滑动只翻一页（重新武装只看时间，不看力度）', () => {
+  test('余波里位移又跳上去，也不再走第二格', () => {
     const r = rig();
     assert.equal(r.feed(BIG).step, 1); // 第一推
     for (let i = 0; i < 10; i++) r.feed(50 * Math.exp(-i / 3), 16); // 惯性尾巴（单调衰减）
     r.advance(40);
-    const again = r.feed(BIG * 1.2, 16); // 又推了一把：位移跳上去
-    assert.equal(again.absorbing, false, '认出新推力，不能再当余波吸收');
-    assert.equal(again.step, 1);
+    const again = r.feed(BIG * 1.2, 16); // 手指没抬、又推了一把：位移跳上去
+    assert.equal(again.absorbing, true, '同一段滑动里不许再放行一格');
+    assert.equal(again.step, 0);
   });
 
-  test('从静止起手（逐发加速）也能被认出来', () => {
+  test('从静止起手逐发加速，也走不出第二格', () => {
     const r = rig();
     assert.equal(r.feed(BIG).step, 1);
     for (let i = 0; i < 10; i++) r.feed(50 * Math.exp(-i / 3), 16);
     r.advance(40);
     let stepped = 0;
     for (const d of [6, 9, 14, 22, 30, 38, 44]) stepped += r.feed(d, 16).step;
-    assert.equal(stepped, 1, '慢起手也该在余波里再走一格');
+    assert.equal(stepped, 0, '一次滑动 = 一页，加速段不该再放行一格');
   });
 
   test('惯性尾巴里夹着 60ms 合并帧（主线程忙）不再走第二格', () => {
@@ -259,12 +259,24 @@ describe('鼠标格必须是"孤立事件"（主线程忙时合并出来的一�
     assert.equal(merged.step, 0);
   });
 
-  test('停够之后再来的稀疏大位移才算鼠标格', () => {
+  test('流里被合并出来的"更大的一帧"也不会逃逸成鼠标格（旧逃逸阀已移除）', () => {
+    const r = rig();
+    assert.equal(r.feed(10, 16).step, 0);
+    assert.equal(r.feed(60, 16).step, 1);
+    // 主线程卡了一下，把好几帧合并成一大跳：位移比上一发大得多
+    const merged = r.feed(160, 70);
+    assert.equal(merged.notch, false, '判据只看时间：仍算同一段流');
+    assert.equal(merged.absorbing, true);
+    assert.equal(merged.step, 0);
+  });
+
+  test('停够（>continuationMs）之后再来的稀疏大位移才算鼠标格', () => {
     const r = rig();
     assert.equal(r.feed(10, 16).step, 0);
     assert.equal(r.feed(60, 16).step, 1);
     r.feed(60, 30); // 流里的合并帧
-    const e = r.feed(100, 60); // 真的停手 60ms 后再来的孤立一格
+    // 孤立与否**只看时间**：间隔超过 continuationMs 才算真的停手了
+    const e = r.feed(100, WHEEL_GESTURE.continuationMs + 60);
     assert.equal(e.notch, true, '停够之后的孤立大位移才算鼠标格');
   });
 });

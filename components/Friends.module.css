@@ -28,14 +28,13 @@
 .stack {
   --card-w: clamp(240px, 38vw, 560px);
   --card-h: clamp(170px, 27vw, 400px);
-  --peek: clamp(55px, 8vw, 120px);
 
   position: relative;
   width: var(--card-w);
   height: var(--card-h);
   flex-shrink: 0;
-  /* 居中整个堆叠：向左偏移总溢出的一半 */
-  transform: translateX(calc(-1 * var(--peek) * (var(--total) - 1) / 2));
+  /* 居中整个堆叠：--shift = 总溢出长度的一半（负数），由布局算出后写进来 */
+  transform: translateX(var(--shift, 0px));
 }
 
 .card {
@@ -49,8 +48,8 @@
   box-shadow: var(--shadow-1);
   text-decoration: none;
   color: var(--text);
-  /* 桌面端：水平堆叠 */
-  transform: translateX(calc(var(--peek) * var(--offset, 0)));
+  /* 桌面端：水平堆叠。--offset 由布局算出（收纳态是"纸边"间距） */
+  transform: translateX(var(--offset, 0px));
   transition: box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
 }
 
@@ -162,6 +161,36 @@
   color: var(--text);
 }
 
+/* ---- 收纳开关 ----
+   只在友链多到扇不下时出现；默认收起（收纳），点开才把整叠扇开 */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  margin: 0 0 clamp(16px, 4vh, 44px);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-1);
+  color: var(--text-dim);
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-weight: 500;
+  font-size: var(--fs-caption);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+
+.toggle:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.toggle > svg {
+  flex-shrink: 0;
+}
+
 /* ---- 移动端：竖向堆叠 ---- */
 @media (max-width: 767px) {
   .friends {
@@ -176,13 +205,12 @@
   .stack {
     --card-w: 82vw;
     --card-h: 26vh;
-    --peek: 48px;
-    /* 竖向居中：向上偏移总溢出的一半 */
-    transform: translateY(calc(-1 * var(--peek) * (var(--total) - 1) / 2));
+    /* 竖向居中：--shift 同样是总溢出的一半 */
+    transform: translateY(var(--shift, 0px));
   }
 
   .card {
-    transform: translateY(calc(var(--peek) * var(--offset, 0)));
+    transform: translateY(var(--offset, 0px));
   }
 
   /* Apply 内容：横向排列，底部居中 */
