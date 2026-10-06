@@ -9,6 +9,7 @@ import settings from '@/settings.json';
 import { type GalleryItem, imgSrc, thumbSrc, fullSrc } from '@/lib/gallery';
 import { identityRange, shuffleRange } from '@/lib/shuffle';
 import { DURATION, EASE } from '@/lib/motion';
+import { openWheelEvent, routeNestedWheel } from '@/lib/wheel-session.mjs';
 
 /**
  * 单个 Gallery 卡片
@@ -152,21 +153,27 @@ export default function Gallery({ limit }: { limit?: number }) {
         current = el.scrollLeft;
       }
 
+      const session = openWheelEvent(e);
+      if (session.yielded) return;
+
       const max = el.scrollWidth - el.clientWidth;
       // 用 target 判断边缘：rAF 缓动时 el.scrollLeft 滞后于 target，
       // 若用 el.scrollLeft 会导致已到边缘仍持续拦截，无法切换到下一 section
       const canScrollRight = target < max - 1;
       const canScrollLeft = target > 1;
+      const deltaPx = session.deltaPx;
+      const contentCanMove = deltaPx > 0 ? canScrollRight : deltaPx < 0 ? canScrollLeft : false;
+      // Gallery 自己不翻页；到了边缘且这段手势还没滚过，才让给拨码轮
+      const route = routeNestedWheel(session, { contentCanMove, innerCanStep: false });
 
-      // 画廊已到边缘：不拦截，让拨码轮处理 section 切换
-      if (e.deltaY > 0 && !canScrollRight) return;
-      if (e.deltaY < 0 && !canScrollLeft) return;
+      if (route === 'yield') return;
 
-      // 画廊可滚动：拦截 + 平滑滚动，阻止冒泡避免拨码轮双重处理
       e.preventDefault();
       e.stopPropagation();
+      if (route !== 'scroll') return;
 
-      target += e.deltaY;
+      session.markConsumedByContent();
+      target += deltaPx;
       target = Math.max(0, Math.min(max, target));
       if (!rafId) {
         rafId = requestAnimationFrame(animate);

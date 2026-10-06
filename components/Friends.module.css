@@ -84,6 +84,20 @@
   background: var(--scrim);
 }
 
+/* 圆弧展开：每张卡片都露出来，名字不再只留给最上面那张 */
+.stack[data-arc] .cardContent {
+  opacity: 1;
+}
+
+.stack[data-arc] .cardOverlay {
+  background: linear-gradient(180deg, transparent 28%, var(--scrim) 100%);
+}
+
+.stack[data-arc] .card:hover .cardOverlay,
+.stack[data-arc] .isFront .cardOverlay {
+  background: linear-gradient(180deg, transparent 12%, var(--scrim-strong) 100%);
+}
+
 .cardContent {
   position: absolute;
   bottom: 0;

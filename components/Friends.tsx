@@ -9,9 +9,8 @@ import { identityRange, shuffleOrIdentity } from '@/lib/shuffle';
 import { DURATION, EASE } from '@/lib/motion';
 import {
   FRIEND_STACK,
+  arcLayout,
   fanLimit,
-  fitPeek,
-  fannedOffsets,
   needsPacking,
   packedOffsets,
   stackShift,
@@ -57,10 +56,14 @@ export default function Friends() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const hoverTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const initialized = useRef(false);
+  const showAllRef = useRef(false);
+  /** 展开态每张卡片在圆弧上的落点，悬停时沿法线抬起 */
+  const arcPosesRef = useRef<Map<HTMLElement, { x: number; y: number; rotate: number; z: number }>>(new Map());
 
   /** 友链是否多到需要收纳（扇面装得下时连"展开"按钮都不出现，观感与原来完全一致） */
   const collapsible = needsPacking(friends.length, mobile);
   const collapsed = collapsible && !showAll;
+  showAllRef.current = !collapsed && collapsible;
 
   // 检测移动端
   useEffect(() => {
@@ -70,51 +73,105 @@ export default function Friends() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  type ArcPose = { x: number; y: number; rotate: number; z: number };
+
   /**
-   * 当前模式下的错位量表（下标 = 卡片在堆叠里的位置，最后一位是 Apply）。
-   * - 收纳态：前 fanLimit 档照常扇出，其余按"纸边"收进去（总长有上界）
-   * - 展开态：所有卡片等距扇开，档距按容器尺寸算，保证整叠塞得进容器
+   * 收纳态：直线错位（前几档扇出，其余收成纸边）。
+   * 展开态：沿圆弧排开，半径按容器算，旋转后的卡片不出界。
    */
-  const computeOffsets = useCallback((): { m: boolean; offsets: number[] } => {
+  const measure = useCallback((): { m: boolean; arc: ArcPose[] | null; offsets: number[] } => {
     const m = isMobile();
     const stack = stackRef.current;
     const wrapper = wrapperRef.current;
     const peek = getPeek();
     const limit = fanLimit(m);
+    const offsets = packedOffsets(total, peek, limit);
 
-    if (collapsed || !stack || !wrapper) {
-      return { m, offsets: packedOffsets(total, peek, limit) };
-    }
+    // 只有用户点开「展开」才走圆弧；卡片不多时维持原来的直线扇面
+    if (!showAll || !stack || !wrapper) return { m, arc: null, offsets };
 
-    const cardSize = m ? stack.offsetHeight : stack.offsetWidth;
-    const available = m ? wrapper.clientHeight : wrapper.clientWidth;
-    return { m, offsets: fannedOffsets(total, fitPeek(available, cardSize, total, peek)) };
-  }, [collapsed, total]);
+    return {
+      m,
+      offsets,
+      arc: arcLayout(total, wrapper.clientWidth, wrapper.clientHeight, stack.offsetWidth, stack.offsetHeight, m),
+    };
+  }, [showAll, total]);
 
-  /** 把布局写进 DOM：堆叠居中位移 + 每张卡片的错位量 */
+  /** 把布局写进 DOM。展开时卡片走到圆弧上，收起时旋转归零、回到纸边堆叠。 */
   const writeLayout = useCallback(
     (positions: number[], animate: boolean) => {
       const stack = stackRef.current;
-      const { m, offsets } = computeOffsets();
+      const { m, arc, offsets } = measure();
+      const motionOk =
+        animate &&
+        typeof window !== 'undefined' &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      stack?.style.setProperty('--shift', `${stackShift(offsets)}px`);
+      stack?.style.setProperty('--shift', arc ? '0px' : `${stackShift(offsets)}px`);
+      if (stack) {
+        if (arc) stack.dataset.arc = 'true';
+        else delete stack.dataset.arc;
+      }
 
-      const patch = (el: Element, offset: number, zIndex: number) => {
-        const next = { [m ? 'y' : 'x']: offset, [m ? 'x' : 'y']: 0, zIndex };
-        if (animate) gsap.to(el, { ...next, duration: DURATION.base, ease: EASE.out });
+      arcPosesRef.current = new Map();
+
+      const place = (el: HTMLElement, pose: { x: number; y: number; rotate: number }, zIndex: number) => {
+        const next = {
+          x: pose.x,
+          y: pose.y,
+          rotation: pose.rotate,
+          scale: 1,
+          zIndex,
+          transformOrigin: '50% 50%',
+        };
+        if (motionOk) gsap.to(el, { ...next, duration: DURATION.base, ease: EASE.out, overwrite: 'auto' });
         else gsap.set(el, next);
       };
 
+      if (arc) {
+        positions.forEach((friendIndex, position) => {
+          const card = cardRefs.current[friendIndex];
+          const pose = arc[position];
+          if (!card || !pose) return;
+          arcPosesRef.current.set(card, pose);
+          place(card, pose, pose.z);
+        });
+        if (applyRef.current && arc[total - 1]) {
+          arcPosesRef.current.set(applyRef.current, arc[total - 1]);
+          place(applyRef.current, arc[total - 1], arc[total - 1].z);
+        }
+        return;
+      }
+
       positions.forEach((friendIndex, position) => {
         const card = cardRefs.current[friendIndex];
-        if (card) patch(card, offsets[position], 10 + friends.length - position);
+        if (!card) return;
+        const offset = offsets[position] ?? 0;
+        place(card, { x: m ? 0 : offset, y: m ? offset : 0, rotate: 0 }, 10 + friends.length - position);
       });
-
-      // Apply 卡片固定压在最后一位（最外侧，z-index 最低）
-      if (applyRef.current) patch(applyRef.current, offsets[total - 1], 1);
+      if (applyRef.current) {
+        const offset = offsets[total - 1] ?? 0;
+        place(applyRef.current, { x: m ? 0 : offset, y: m ? offset : 0, rotate: 0 }, 1);
+      }
     },
-    [computeOffsets, friends.length, total],
+    [measure, friends.length, total],
   );
+
+  const liftArcCard = useCallback((el: HTMLElement | null, on: boolean) => {
+    if (!el || !showAllRef.current) return;
+    const pose = arcPosesRef.current.get(el);
+    if (!pose) return;
+    gsap.to(el, {
+      x: pose.x,
+      y: pose.y + (on ? -16 : 0),
+      rotation: pose.rotate,
+      scale: on ? 1.04 : 1,
+      zIndex: on ? 80 : pose.z,
+      duration: DURATION.fast,
+      ease: EASE.out,
+      overwrite: 'auto',
+    });
+  }, []);
 
   // 初始定位 + 随机初始顺序
   // 洗牌放在 useLayoutEffect：首帧绘制前完成，既不会看到顺序跳变，
@@ -140,28 +197,36 @@ export default function Friends() {
     return () => window.removeEventListener('resize', handleResize);
   }, [order, writeLayout]);
 
-  // 桌面端：hover > 1s 置顶
+  // 收纳态：hover > 1s 置顶。展开态卡片已经摊在圆弧上，悬停只沿法线抬起。
   const handleMouseEnter = useCallback((friendIndex: number) => {
+    if (showAllRef.current) {
+      liftArcCard(cardRefs.current[friendIndex], true);
+      return;
+    }
     hoverTimers.current[friendIndex] = setTimeout(() => {
       setOrder(prev => {
         if (prev[0] === friendIndex) return prev;
         return [friendIndex, ...prev.filter(i => i !== friendIndex)];
       });
     }, 1000);
-  }, []);
+  }, [liftArcCard]);
 
   const handleMouseLeave = useCallback((friendIndex: number) => {
+    if (showAllRef.current) {
+      liftArcCard(cardRefs.current[friendIndex], false);
+      return;
+    }
     const timer = hoverTimers.current[friendIndex];
     if (timer) {
       clearTimeout(timer);
       delete hoverTimers.current[friendIndex];
     }
-  }, []);
+  }, [liftArcCard]);
 
   // 移动端：拖拽前卡片向下滑出 → 下一张置顶
   useEffect(() => {
     const stack = stackRef.current;
-    if (!stack || !mobile) return;
+    if (!stack || !mobile || showAll) return;
 
     let startY = 0;
     let dragging = false;
@@ -224,7 +289,7 @@ export default function Friends() {
       stack.removeEventListener('touchmove', handleTouchMove);
       stack.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [mobile, order, friends.length]);
+  }, [mobile, order, friends.length, showAll]);
 
   // 清理计时器
   useEffect(() => {
@@ -258,6 +323,8 @@ export default function Friends() {
               e.preventDefault();
               setDialogOpen(true);
             }}
+            onMouseEnter={() => liftArcCard(applyRef.current, true)}
+            onMouseLeave={() => liftArcCard(applyRef.current, false)}
           >
             <div className={styles.applyContent}>
               <span className={styles.plus}>
@@ -278,6 +345,8 @@ export default function Friends() {
               className={`${styles.card} ${order[0] === friendIndex ? styles.isFront : ''}`}
               data-friend-card
               onClick={(e) => {
+                // 展开后每张卡片都露在圆弧上，点击直接去对方站点
+                if (showAll) return;
                 if (order[0] !== friendIndex) {
                   e.preventDefault();
                   setOrder(prev => [friendIndex, ...prev.filter(i => i !== friendIndex)]);

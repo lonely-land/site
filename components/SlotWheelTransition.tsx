@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect, useLayoutEffect, ReactNode, Children } from 'react';
 import gsap from 'gsap';
 import { DURATION } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
+import { WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
+import { openWheelEvent, queueNavigation } from '@/lib/wheel-session.mjs';
 import WheelFeelTuner from './WheelFeelTuner';
 import styles from './SlotWheelTransition.module.css';
 
@@ -226,9 +227,6 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
     const container = containerRef.current;
     if (!container) return;
 
-    // 一段手势最多推进一格：惯性尾巴（同一段手势）只吸收、不再触发
-    const gesture = createWheelGesture();
-
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
@@ -238,27 +236,18 @@ export default function SlotWheelTransition({ children }: SlotWheelTransitionPro
       // Landing 未就绪时禁止切换（防止黑屏）
       if (!landingReadyRef.current) return;
 
-      // Gallery 自行处理横向滚动并 stopPropagation，
-      // 到达此处的事件来自非 Gallery 区域或 Gallery 已到边缘 → 切换 section
+      // 与 Profile / Gallery 共用一份手势。内层若已经用这段滑动滚了内容，
+      // 或已经翻过页，这里看到的 spent 不是 none，不能再翻一屏。
+      const session = openWheelEvent(e);
+      if (session.absorbing || session.spent !== 'none') return;
 
-      // 注意：动画中也要把事件喂进手势（beginEvent 负责续期"同一段手势"），
-      // 否则惯性尾巴会被误判成"新手势"，动画一结束就又跳一格
-      // —— 这正是"用力猛一点就划过头"的来源
-      const { absorbing, notch } = gesture.beginEvent(e);
-      if (absorbing) return;
-
-      // 鼠标滚轮是离散输入：一格走一格，不累积、不等待（"PC 上敏感一点"）；
-      // 触控板走原路：一段手势累积够 triggerPx 才走一格
-      const step = notch ? gesture.takeNotchStep(wheelDeltaPx(e)) : gesture.takeStep(wheelDeltaPx(e));
+      // 鼠标滚轮是离散输入：一格走一格；触控板要累积够 triggerPx 才走一格
+      const step = session.notch ? session.takeNotchStep() : session.takeStep();
       if (step === 0) return;
       if (isAnimating.current || Date.now() < dwellUntilRef.current) {
         // 动画中/刚换完屏：别把用户的意图丢掉，排队，一格一次动画。
-        // 离散鼠标格可以连排 3 格（快滚就是要连着走）；**连续流最多排 1 格** ——
-        // 否则一次甩动的余波会绕过中间那块的规则直接冲过去
-        // （用户要求：显示哪块，就以哪块的规则为准，而不是几块同时生效）。
-        const cap = notch ? 3 : 1;
-        const next = pendingStepRef.current + step;
-        pendingStepRef.current = Math.sign(next) === Math.sign(step) ? Math.max(-cap, Math.min(cap, next)) : step;
+        // 离散鼠标格可以连排 3 格；连续流最多排 1 格。
+        pendingStepRef.current = queueNavigation(pendingStepRef.current, step, session.notch);
         armDrain();
         return;
       }
