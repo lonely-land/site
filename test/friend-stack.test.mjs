@@ -14,6 +14,7 @@ import {
   fannedOffsets,
   fitPeek,
   stackShift,
+  arcLayout,
 } from '../lib/friend-stack.mjs';
 
 /** 桌面实测档距（getPeek() 的 clamp 上限附近） */
@@ -121,6 +122,63 @@ describe('展开态：整叠塞得进容器', () => {
 
   test('容器比卡片还小时退到下限而不是负数', () => {
     assert.equal(fitPeek(300, 560, 10, PEEK), FRIEND_STACK.minPeek);
+  });
+});
+
+describe('展开态：圆弧', () => {
+  const cardW = 480;
+  const cardH = 280;
+
+  function halfExtents(w, h, deg) {
+    const rad = (Math.abs(deg) * Math.PI) / 180;
+    return {
+      x: (w / 2) * Math.abs(Math.cos(rad)) + (h / 2) * Math.abs(Math.sin(rad)),
+      y: (w / 2) * Math.abs(Math.sin(rad)) + (h / 2) * Math.abs(Math.cos(rad)),
+    };
+  }
+
+  function assertInside(poses, availW, availH, w = cardW, h = cardH) {
+    for (const p of poses) {
+      const e = halfExtents(w, h, p.rotate);
+      assert.ok(Math.abs(p.x) + e.x <= availW / 2 + 1, `横向出界 x=${p.x} rot=${p.rotate}`);
+      assert.ok(Math.abs(p.y) + e.y <= availH / 2 + 1, `纵向出界 y=${p.y} rot=${p.rotate}`);
+    }
+  }
+
+  test('空和单张', () => {
+    assert.deepEqual(arcLayout(0, 1200, 700, cardW, cardH), []);
+    const one = arcLayout(1, 1200, 700, cardW, cardH);
+    assert.equal(one.length, 1);
+    assert.equal(one[0].rotate, 0);
+  });
+
+  test('桌面：左右对称，中心最高，两端下垂', () => {
+    const poses = arcLayout(9, 1280, 720, cardW, cardH, false);
+    assert.equal(poses.length, 9);
+    assert.ok(Math.abs(poses[0].x + poses.at(-1).x) < 0.5, '左右不对称');
+    assert.ok(Math.abs(poses[0].rotate + poses.at(-1).rotate) < 0.5, '转角不对称');
+    const mid = poses[4];
+    assert.ok(Math.abs(mid.rotate) < 0.01);
+    assert.ok(mid.y < poses[0].y, '中心应该比两端更高');
+    assert.ok(poses[0].y - mid.y > 12, '下垂太小，看不出圆弧');
+    assert.ok(Math.abs(poses[0].rotate) > 8, '两端应该跟着切线转');
+    assert.ok(mid.z > poses[0].z, '中心卡片应该压在两端上面');
+    assertInside(poses, 1280, 720);
+  });
+
+  test('友链很多时仍然塞得进容器', () => {
+    for (const n of [7, 12, 24]) {
+      const poses = arcLayout(n, 1100, 640, cardW, cardH, false);
+      assert.equal(poses.length, n);
+      assertInside(poses, 1100, 640);
+    }
+  });
+
+  test('移动端沿纵向展开，仍然不越界', () => {
+    const poses = arcLayout(8, 390, 640, 320, 180, true);
+    assert.equal(poses.length, 8);
+    assert.ok(poses.at(-1).y > poses[0].y);
+    assertInside(poses, 390, 640, 320, 180);
   });
 });
 

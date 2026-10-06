@@ -94,13 +94,13 @@ describe('一段手势最多推进一格', () => {
     assert.equal(e.step, 0);
   });
 
-  test('离散输入按人手节奏来（格间 260ms）→ 每格走一格，不被上一格的余波吃掉', () => {
+  test('离散输入按人手节奏来（格间停够 idleMs）→ 每格走一格，不被上一格的余波吃掉', () => {
     const r = rig();
     let steps = 0;
     for (let i = 0; i < 3; i++) {
-      // 每一"格"是分帧上报的 8×8px（共 64px），格与格之间停 260ms
+      // 每一"格"是分帧上报的 8×8px（共 64px），格与格之间停到 idleMs 之外
       for (let k = 0; k < 8; k++) steps += r.feed(8, 10).step;
-      if (i < 2) r.feed(0, 260 - 8 * 10);
+      if (i < 2) r.feed(0, WHEEL_GESTURE.idleMs + 40);
     }
     assert.equal(steps, 3);
   });
@@ -160,6 +160,21 @@ describe('内容自己滚的手势不翻页', () => {
     r.advance(WHEEL_GESTURE.idleMs + 100);
     assert.equal(r.feed(BIG).step, 1);
   });
+
+  test('列表滚完后的减速尾巴（200ms、大位移）不许接着翻页', () => {
+    const r = rig();
+    r.feed(40, 16);
+    r.g.markConsumedByContent();
+    for (let i = 0; i < 8; i++) {
+      const e = r.feed(80, 16);
+      r.g.markConsumedByContent();
+      assert.equal(e.step, 0);
+    }
+    const tail = r.feed(160, 200);
+    assert.equal(tail.notch, false);
+    assert.equal(tail.step, 0, 'Profile 滚到底的余波不能再翻页');
+    assert.equal(tail.spent, 'content');
+  });
 });
 
 describe('一次滑动只翻一页（重新武装只看时间，不看力度）', () => {
@@ -192,12 +207,24 @@ describe('一次滑动只翻一页（重新武装只看时间，不看力度）'
     assert.equal(stepped, 1, '合并帧拉长的是同一段手势，不能读成第二格');
   });
 
-  test('真的停手（>140ms）再推，能马上再来一格', () => {
+  test('减速尾巴（间隔 200ms，仍小于 idleMs）不再走第二格', () => {
     const r = rig();
     let stepped = 0;
-    stepped += r.feed(60, 8).step;   // 甩一格
-    stepped += r.feed(60, 8).step;   // 尾巴（吸收）
-    stepped += r.feed(60, 200).step; // 停手再推
+    stepped += r.feed(60, 8).step;
+    stepped += r.feed(60, 8).step;
+    const tail = r.feed(160, 200); // 以前按 140ms 重新武装，这里会再翻一页
+    assert.equal(tail.notch, false);
+    assert.equal(tail.absorbing, true);
+    stepped += tail.step;
+    assert.equal(stepped, 1);
+  });
+
+  test('真的停手（>idleMs）再推，能马上再来一格', () => {
+    const r = rig();
+    let stepped = 0;
+    stepped += r.feed(60, 8).step; // 甩一格
+    stepped += r.feed(60, 8).step; // 尾巴（吸收）
+    stepped += r.feed(60, WHEEL_GESTURE.idleMs + 40).step; // 停手再推
     assert.equal(stepped, 2);
   });
 
@@ -221,7 +248,7 @@ describe('一次滑动只翻一页（重新武装只看时间，不看力度）'
     let stepped = 0;
     for (let seg = 0; seg < 3; seg++) {
       for (let k = 0; k < 4; k++) stepped += r.feed(T * 0.6, 12).step;
-      r.feed(0, 150); // 手指抬起换一口气（>latchMs，也 >minStepGapMs）
+      r.feed(0, WHEEL_GESTURE.idleMs + 40); // 手指抬起，停够才算下一次
     }
     assert.equal(stepped, 3);
   });
@@ -270,13 +297,23 @@ describe('鼠标格必须是"孤立事件"（主线程忙时合并出来的一�
     assert.equal(merged.step, 0);
   });
 
-  test('停够（>continuationMs）之后再来的稀疏大位移才算鼠标格', () => {
+  test('流结束 200ms 后的大位移仍算同一段尾巴，不算鼠标格', () => {
     const r = rig();
     assert.equal(r.feed(10, 16).step, 0);
     assert.equal(r.feed(60, 16).step, 1);
     r.feed(60, 30); // 流里的合并帧
-    // 孤立与否**只看时间**：间隔超过 continuationMs 才算真的停手了
-    const e = r.feed(100, WHEEL_GESTURE.continuationMs + 60);
+    const e = r.feed(100, 200);
+    assert.equal(e.notch, false, '减速尾巴不该读成鼠标格');
+    assert.equal(e.absorbing, true);
+    assert.equal(e.step, 0);
+  });
+
+  test('停够（>idleMs）之后再来的稀疏大位移才算鼠标格', () => {
+    const r = rig();
+    assert.equal(r.feed(10, 16).step, 0);
+    assert.equal(r.feed(60, 16).step, 1);
+    r.feed(60, 30); // 流里的合并帧
+    const e = r.feed(100, WHEEL_GESTURE.idleMs + 60);
     assert.equal(e.notch, true, '停够之后的孤立大位移才算鼠标格');
   });
 });

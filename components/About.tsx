@@ -6,7 +6,8 @@ import { ArrowUpRight } from 'lucide-react';
 import styles from './About.module.css';
 import settings from '@/settings.json';
 import { DURATION, EASE } from '@/lib/motion';
-import { createWheelGesture, wheelDeltaPx, WHEEL_GESTURE, type WheelGesture } from '@/lib/wheel-gesture.mjs';
+import { WHEEL_GESTURE } from '@/lib/wheel-gesture.mjs';
+import { openWheelEvent, queueNavigation, routeNestedWheel } from '@/lib/wheel-session.mjs';
 
 /**
  * About：分页器（3 页：Music / Anime / Games）
@@ -158,8 +159,6 @@ export default function About() {
   };
   /** 翻页动画期间攒下的鼠标格（+1/-1），动画结束接着翻 */
   const pendingPageRef = useRef(0);
-  /** 滚轮手势状态：跨页延续（见下面 wheel effect 的说明） */
-  const gestureRef = useRef<WheelGesture | null>(null);
   const playedRef = useRef(false);
   const [index, setIndex] = useState(0);
 
@@ -309,13 +308,14 @@ export default function About() {
   }, [index]);
 
   /**
-   * 滚轮 / 触摸的归属：
-   * 1) 页内容还能滚 → 自己吃掉，让内容滚（整段手势就此归列表，不再翻页）
-   * 2) 已到边缘 + 还有上一页/下一页 → 翻页（一段手势只翻一页）
-   * 3) 首尾页的边缘 → 不拦截，交给拨码轮翻屏
+   * 滚轮归属与 Gallery、拨码轮是同一套（lib/wheel-session）：
+   * 1) 页内容还能滚 → 自己滚，整段手势归列表
+   * 2) 已经滚过或翻过 → 到了边缘也只吸收，惯性尾巴不许再翻页
+   * 3) 没滚过、到了边缘、还有上一页/下一页 → 翻一页
+   * 4) 首尾页的边缘 → 整段手势让给拨码轮
    *
-   * "一段手势只兑现一次动作"是刻意的：原先列表滚到底后，同一次划动的惯性
-   * 余波会接着翻页、再翻屏（用户反馈"用力猛一点就划过头"）。
+   * 滚动由这里写入 scrollTop，不走浏览器原生滚轮。否则一发很大的 delta
+   * 会把列表打到尽头，剩下的惯性又去翻页（Profile 划过头）。
    */
   useEffect(() => {
     const el = bodyRef.current;
@@ -325,69 +325,47 @@ export default function About() {
     const canScroll = () => el.scrollHeight - el.clientHeight > 8;
     const atTop = () => el.scrollTop <= 1;
     const atBottom = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-    const listCanMove = (deltaPx: number) => (deltaPx > 0 ? !atBottom() : !atTop());
-
-    // 手势状态挂在 ref 上：翻页会重建这个 effect，但"同一段手势"要跨页延续，
-    // 否则惯性尾巴会被新页面的闭包当成新手势
-    const gesture = (gestureRef.current ??= createWheelGesture());
-
-    /** 返回 true 表示事件已自己处理（不该再给拨码轮） */
-    const claimWheel = (e: WheelEvent): boolean => {
-      const deltaPx = wheelDeltaPx(e);
-      // 每个事件都要过一遍状态机：它负责续期"同一段手势"（被吸收的事件也算）
-      const { absorbing, notch, yielded } = gesture.beginEvent(e);
-
-      // 本段手势已让给拨码轮（停在首/末页边缘）：余波继续放行，等**新手势**再恢复接管。
-      // 这个标志由手势状态机持有（fresh 时自动收回），不会永久粘住。
-      if (yielded) return false;
-
-      // 这段手势已经翻过一页：余波连原生滚动都不许 —— 否则翻过去的新页面
-      // 会被惯性直接滚到底（"用力猛一点就过头"的另一种形态）
-      if (absorbing) {
-        e.preventDefault();
-        return true;
-      }
-
-      if (canScroll() && listCanMove(deltaPx)) {
-        // 指针不在列表上（标题/分页点/空白处）：滚轮一样归这块的列表，
-        // 手动滚而不是放行 —— 否则"指针停在标题上滚一下"会整屏翻走
-        if (!el.contains(e.target as Node)) {
-          e.preventDefault();
-          el.scrollTop += deltaPx;
-        }
-        gesture.markConsumedByContent(); // 归列表：这段手势不再翻页
-        return true;
-      }
-
-      // 鼠标一格走一格（离散点击，不受触控板阈值/静默期约束）
-      const step = notch ? gesture.takeNotchStep(deltaPx) : gesture.takeStep(deltaPx);
-      if (step === 0) return true; // 未到阈值 or 同一段手势的余波 → 吃掉，不外传
-      const next = indexRef.current + step;
-      if (next < 0 || next >= PAGES.length) {
-        gesture.markYielded(); // 首/末页边缘 → 整段手势让给拨码轮
-        return false;
-      }
-      if (busyRef.current || Date.now() < dwellUntilRef.current) {
-        // 翻页动画很短（0.16s），先攒着，别把用户的意图丢掉
-        pendingPageRef.current = Math.max(-3, Math.min(3, pendingPageRef.current + step));
-        armDrain();
-        return true;
-      }
-      goTo(next);
-      return true;
-    };
 
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
         e.stopPropagation();
         return;
       }
-      // **绝不能在这里提前 return**：每个事件都必须过一遍 beginEvent，
-      // 否则"同一段手势"的判定会断掉，"让给拨码轮"的标志也永远等不到 fresh 复位
-      // （现象：从 Gallery 退回 Profile 后滚轮再也翻不动这一块的页，点一下分页点才好）
-      // 只 stopPropagation，千万不要 preventDefault（除非上面明确要吸收余波）：
-      // preventDefault 会连原生滚动一起取消掉（内容就永远滚不动、也永远到不了边缘）
-      if (claimWheel(e)) e.stopPropagation();
+      // 每个事件都要进会话（含被吸收的）。提前 return 会把"让给拨码轮"粘死：
+      // 从 Gallery 退回 Profile 后滚轮再也翻不动这一块的页。
+      const session = openWheelEvent(e);
+      if (session.yielded) return;
+
+      const deltaPx = session.deltaPx;
+      const contentCanMove = canScroll() && (deltaPx > 0 ? !atBottom() : deltaPx < 0 ? !atTop() : false);
+      const dir = deltaPx > 0 ? 1 : deltaPx < 0 ? -1 : 0;
+      const next = indexRef.current + dir;
+      const innerCanStep = dir !== 0 && next >= 0 && next < PAGES.length;
+      const route = routeNestedWheel(session, { contentCanMove, innerCanStep });
+
+      if (route === 'yield') {
+        session.markYielded();
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (route === 'absorb') return;
+
+      if (route === 'scroll') {
+        el.scrollTop += deltaPx;
+        session.markConsumedByContent();
+        return;
+      }
+
+      const step = session.notch ? session.takeNotchStep() : session.takeStep();
+      if (step === 0) return;
+      if (busyRef.current || Date.now() < dwellUntilRef.current) {
+        pendingPageRef.current = queueNavigation(pendingPageRef.current, step, session.notch);
+        armDrain();
+        return;
+      }
+      goTo(indexRef.current + step);
     };
 
     let startY = 0;
