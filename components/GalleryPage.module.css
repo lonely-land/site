@@ -2,7 +2,7 @@
 .page {
   min-height: 100vh;
   background: var(--ink);
-  padding: 80px 4vw 120px;
+  padding: calc(var(--bar-h) + 28px) 4vw 120px;
 }
 
 .header {

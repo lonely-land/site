@@ -1,0 +1,279 @@
+.page {
+  min-height: 100vh;
+}
+
+.sheet {
+  width: min(42rem, calc(100% - 2.5rem));
+  margin: 0 auto;
+  padding: calc(var(--bar-h) + 12vh) 0 18vh;
+}
+
+.essay {
+  margin: 0 0 22vh;
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: clamp(20px, 2.3vw, 28px);
+  font-weight: 500;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+.stanza {
+  margin: 0 0 1.15em;
+}
+
+.glyph {
+  display: inline;
+  /* 未读时的墨色。滚动之后由脚本逐字提亮，避免首屏先全白再变灰。 */
+  color: rgb(58 58 58);
+  /* 词牌收成 flex 时，普通空格会被吃掉（Cuz Technology → CuzTechnology） */
+  white-space: pre;
+}
+
+.term {
+  display: inline-block;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.28);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  white-space: nowrap;
+}
+
+.term:hover,
+.term:focus-visible {
+  text-decoration-color: rgba(255, 255, 255, 0.82);
+}
+
+.term:focus-visible,
+.feature:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.feature {
+  display: inline;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-decoration: none;
+  /* 名字按词换行，不要在「Cuz Technology」中间断开 */
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.feature[data-open='true'] .pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.02em;
+  padding: 0.06em 0.22em 0.08em 0.14em;
+  border-radius: 0.22em;
+  background: var(--ink-2);
+  vertical-align: baseline;
+  line-height: 1;
+  animation: float-up 0.7s var(--ease-out) both;
+}
+
+.featureTitle {
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+.feature[data-open='true'] .featureTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28em;
+  font-size: inherit;
+  line-height: 1;
+}
+
+.feature[data-open='true'] .featureTitle .glyph {
+  color: var(--text) !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: var(--text) !important;
+  line-height: 1;
+}
+
+.titleWord {
+  display: inline;
+}
+
+.titleSizer {
+  display: none;
+}
+
+.feature[data-open='true'] .titleWord,
+.feature[data-open='true'] .titleInk {
+  display: inline;
+  line-height: 1;
+}
+
+.feature:not([data-open='true']) .iconSlot {
+  display: none;
+}
+
+.iconSlot {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.05em;
+  height: 1.05em;
+  overflow: hidden;
+  border-radius: 0.18em;
+  background: #fff;
+}
+
+.iconSlot img {
+  width: 100%;
+  height: 100%;
+}
+
+.end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.contactLabel {
+  margin: 0;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: var(--fs-h2);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--text);
+}
+
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contacts a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text);
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.contacts a:hover span,
+.contacts a:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.contacts a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.contactIcon {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.copy {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-caption);
+  color: var(--text-mute);
+}
+
+.hint {
+  position: fixed;
+  z-index: 20;
+  top: calc(var(--bar-h) + 8px);
+  right: 1.4rem;
+  left: 1.4rem;
+  margin: 0;
+  color: var(--text-mute);
+  font-family: var(--font-satoshi), var(--font-alimama), var(--font-fallback);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 1;
+  transition: opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
+.page[data-scrolled='true'] .hint {
+  opacity: 0;
+}
+
+.grain {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes float-up {
+  from {
+    transform: translateY(1.1rem);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    width: min(44rem, calc(100% - 1.5rem));
+    padding-top: calc(var(--bar-h) + 9vh);
+  }
+
+  .essay {
+    font-size: 1.125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature,
+  .pill,
+  .iconSlot,
+  .hint {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .glyph {
+    background: none !important;
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText;
+  }
+}

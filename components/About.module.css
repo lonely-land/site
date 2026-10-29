@@ -1,23 +1,15 @@
-/* About：分页器（Music / Anime / Games）
-
-   设计语言对齐站点现有区块：
-   - 不套面板底色（同 Gallery），卡片感由条目自己提供
-   - 标题走全局 .sectionTitle，头部一行「标题在左、分页点在右」（同 GalleryPage header）
-   - 排版 / 颜色 / 圆角 / 动效全部走 globals.css 的 token
-   - 图片统一「shimmer 骨架 → 淡入」，关键帧与 Gallery.module.css 同源
-
-   版式比例取自 Figma「Profile」并在此基础上提密度：歌手方格 6 列、番剧行
-   缩略图 148×198（桌面 110 宽封顶）、游戏行图标 1:1（桌面 76 宽封顶）、
-   番剧/游戏桌面各 3 列、行底图统一 85% 压暗（--scrim-card 0.86）。 */
+/* Music / Anime / Games 各是一页。
+   不套面板底色，卡片感由条目自己提供；标题走全局 .sectionTitle。
+   版式：歌手方格 6 列、番剧行缩略图 148×198、游戏行图标 1:1、
+   番剧/游戏桌面各 3 列、行底图统一压暗（--scrim-card）。 */
 
 .about {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: var(--block-height);
-  padding: 3vh 4vw 4vh;
+  min-height: 100svh;
+  padding: calc(var(--bar-h) + var(--space-6)) 4vw var(--space-8);
   background: var(--ink);
-  overflow: hidden;
 }
 
 /* 只给读屏用的区块名 */
@@ -94,7 +86,7 @@
   border-radius: var(--radius-pill);
 }
 
-/* ---- 页内容：能滚就自己滚（滚轮归属见 About.tsx） ---- */
+/* 页内容跟着文档一起滚，不再自己套一层滚动条 */
 .pageBody {
   position: relative;
   display: flex;
@@ -103,14 +95,6 @@
   max-width: 1120px;
   margin-left: auto;
   margin-right: auto;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  /* 纵向手势留给页内容自己（拨码轮由 JS 在边缘放行） */
-  touch-action: pan-y;
 }
 
 .pageBody::-webkit-scrollbar {
@@ -227,7 +211,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(16px, 2.2vw, 30px) clamp(14px, 2.2vw, 30px);
-  margin: auto 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -262,7 +246,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(10px, 1.2vw, 16px);
-  margin: auto 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lightbox from 'yet-another-react-lightbox';
@@ -66,17 +65,6 @@ export default function GalleryPage() {
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // 修复滚动：首页 globals.css 设了 body overflow:hidden，gallery 页面需要可滚动
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'auto';
-    document.documentElement.style.overflow = 'auto';
-    return () => {
-      document.body.style.overflow = prev;
-      document.documentElement.style.overflow = '';
-    };
-  }, []);
-
   // 入场动画：卡片从下方淡入，完成后清除 will-change 释放 GPU 层
   // 依赖 order：洗牌后会重建动画，保证 stagger 顺序与最终排列一致
   useEffect(() => {
@@ -125,7 +113,6 @@ export default function GalleryPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={`sectionTitle ${styles.title}`}>Gallery</h1>
-        <Link href="/" className={styles.backLink}>← Back to home</Link>
       </header>
 
       <div ref={gridRef} className={styles.grid}>
