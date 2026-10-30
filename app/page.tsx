@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Landing from "@/components/Landing";
 import About from "@/components/About";
 import Gallery from "@/components/Gallery";
@@ -5,10 +6,12 @@ import Friends from "@/components/Friends";
 import Footer from "@/components/Footer";
 import BlockScaleWrapper from "@/components/BlockScaleWrapper";
 import SlotWheelTransition from "@/components/SlotWheelTransition";
+import styles from "./home.module.css";
 
 export default function Home() {
   return (
     <main className="w-full bg-ink">
+      <Link href="/about" className={styles.about}>About</Link>
       <SlotWheelTransition>
         {/* Block 1: Landing */}
         <BlockScaleWrapper designHeight={1024} origin="center" mode="cover" backgroundColor="#101010">

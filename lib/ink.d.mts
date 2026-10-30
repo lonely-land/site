@@ -1,0 +1,15 @@
+export const DIM: readonly [number, number, number];
+export const LIT: readonly [number, number, number];
+export const NIB: readonly [number, number, number];
+export const OPEN_AT: number;
+export const CLOSE_AT: number;
+export function clamp01(value: number): number;
+export function lineProgress(lineY: number, viewportHeight: number, lineHeight?: number): number;
+export function charInk(progress: number, index: number, count: number, softness?: number): number;
+export function inkColor(ink: number): string;
+export const DIM_COLOR: string;
+export const LIT_COLOR: string;
+export type InkItem = { x: number; y: number };
+export function groupLines<T extends InkItem>(items: T[], tolerance: number): T[][];
+export function nextOpen(wasOpen: boolean, ink: number): boolean;
+export function holdInk(previous: number, next: number): number;

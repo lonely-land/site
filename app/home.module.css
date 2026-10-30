@@ -1,0 +1,24 @@
+/* 首页只留一个出口，不铺一排栏目 */
+.about {
+  position: fixed;
+  z-index: 50;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(22px, env(safe-area-inset-right));
+  font-family: var(--font-satoshi), var(--font-fallback);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.about:hover,
+.about:focus-visible {
+  color: var(--text);
+}
+
+.about:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
