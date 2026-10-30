@@ -1,6 +1,7 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   features,
   paragraphs,
@@ -114,6 +115,18 @@ function renderPiece(piece: Piece, index: number) {
 export default function InkEssay() {
   const rootRef = useRef<HTMLDivElement>(null);
   const links = settings.links as LinkItem[];
+
+  // 首页把滚动锁在拨码轮上，这一页要自己滚
+  useEffect(() => {
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    return () => {
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -241,6 +254,9 @@ export default function InkEssay() {
 
   return (
     <div ref={rootRef} className={styles.page} data-scrolled="false">
+      <header className={styles.bar}>
+        <Link href="/" className={styles.mark}>Lonely</Link>
+      </header>
       <main className={styles.sheet}>
         <h1 className={styles.srOnly}>Lonely</h1>
         <p className={styles.srOnly}>

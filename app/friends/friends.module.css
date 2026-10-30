@@ -1,6 +1,0 @@
-/* 友链占满导航以下的一屏，联系方式在下一屏 */
-.stage {
-  box-sizing: border-box;
-  height: 100svh;
-  padding-top: var(--bar-h);
-}

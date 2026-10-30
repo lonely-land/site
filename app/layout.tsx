@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import SiteBar from "@/components/SiteBar";
 import "./globals.css";
 
 /**
@@ -41,7 +40,8 @@ const alimama = localFont({
 
 export const metadata: Metadata = {
   title: "Lonely — Take picture, write code and design product.",
-  description: "嗨！我是 Lonely，Developer / Furry / Designer。",
+  description:
+    "Lonely の Profile！",
   manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Lonely — Take picture, write code and design product.",
@@ -65,7 +65,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className="bg-ink text-white antialiased">
-        <SiteBar />
         {children}
       </body>
     </html>

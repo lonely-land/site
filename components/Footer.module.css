@@ -4,9 +4,9 @@
   flex-direction: column;
   align-items: center;
   background: var(--ink);
-  padding: calc(var(--bar-h) + 6vh) 0 0;
-  width: 100%;
-  min-height: 100svh;
+  padding: 8vh 0 0;
+  width: 100vw;
+  height: var(--block-height);
   overflow: hidden;
   position: relative;
 }
@@ -95,10 +95,9 @@
 
 @media (max-width: 767px) {
   .footer {
-    width: 100%;
-    min-height: 100svh;
-    height: auto;
-    padding: calc(var(--bar-h) + 48px) 24px 120px;
+    width: 100vw;
+    height: var(--block-height);
+    padding: 80px 24px 120px;
     justify-content: flex-start;
   }
 

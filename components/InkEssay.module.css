@@ -1,5 +1,37 @@
 .page {
+  --bar-h: calc(52px + env(safe-area-inset-top));
   min-height: 100vh;
+}
+
+.bar {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: var(--bar-h);
+  padding: env(safe-area-inset-top) max(22px, env(safe-area-inset-right)) 0
+    max(22px, env(safe-area-inset-left));
+  background: linear-gradient(to bottom, var(--ink) calc(100% - 14px), transparent);
+  pointer-events: none;
+}
+
+.mark {
+  pointer-events: auto;
+  font-family: var(--font-boska), var(--font-fallback);
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.mark:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 
 .sheet {

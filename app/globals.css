@@ -65,12 +65,9 @@
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* 顶栏高度。页面用它把内容让开，避免钻到字标下面。 */
-  --bar-h: calc(64px + env(safe-area-inset-top));
-
-  /* Friends / Footer 仍按一屏排。
+  /* 每个 Block（Landing / Gallery / Friends / Footer）的高度。
      移动端浏览器地址栏会占掉一部分高度：100vh 取的是「工具栏收起」的大视口，
-     于是贴底的字会被顶到屏幕外看不见。
+     于是 Block 底部（Footer 的 Lonely 大字就在 bottom: 0）会被顶到屏幕外看不见。
      svh 取的是「工具栏展开」的最小视口，永远完整可见；
      不支持 svh 的旧浏览器回退到 100vh。 */
   --block-height: 100vh;
@@ -156,9 +153,7 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 页面自己滚动。clip 掉贴边大字的横向溢出，又不把纵向滚轮一起禁掉。 */
-  overflow-x: clip;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 ::selection {
