@@ -73,6 +73,17 @@
   transform: scaleX(1);
 }
 
+/* 状态徽章：贴在联系方式左缘，当作列表的收尾，不单独占一屏中轴 */
+.statusBadge {
+  align-self: flex-start;
+  display: block;
+  width: 250px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color-scheme: normal;
+}
+
 /* 底部 Lonely 描边大字：装饰性水印，字号单独一档，属于有意的层级对比。
    字体用无衬线 Satoshi（保留原来的观感），呼应区块标题的展示字体但不跟随 */
 .lonely {
@@ -116,6 +127,13 @@
   .frame2 {
     justify-content: center;
     column-gap: var(--space-3);
+  }
+
+  /* 徽章内容在 250px 透明 iframe 里靠左，约 185px。
+     平移半段空白，让绿点和文案落在居中的联系方式中间 */
+  .statusBadge {
+    align-self: center;
+    transform: translateX(32px);
   }
 
   /* 移动端不再向下溢出 5%，保证大字完整落在可见视口内 */
