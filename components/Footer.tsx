@@ -34,6 +34,16 @@ export default function Footer() {
               <span className={styles.contactText}>{item.name}</span>
             </a>
           ))}
+          <iframe
+            className={styles.statusBadge}
+            src="https://status.lonely.land/badge?theme=dark"
+            width={250}
+            height={30}
+            frameBorder={0}
+            scrolling="no"
+            title="Lonely status"
+            style={{ colorScheme: 'normal' }}
+          />
         </div>
         <p className={styles.lonely}>Lonely</p>
       </div>
